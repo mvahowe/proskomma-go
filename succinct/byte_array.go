@@ -1,6 +1,7 @@
 package succinct
 
 import (
+	b64 "encoding/base64"
 	"fmt"
 )
 
@@ -183,6 +184,16 @@ func (ba *ByteArray) NByteLength(v int) int {
 		ret++
 	}
 	return ret
+}
+
+func (ba *ByteArray) base64() string {
+	return b64.StdEncoding.EncodeToString(ba.bytes)
+}
+
+func (ba *ByteArray) fromBase64(s string) {
+	bytes, _ := b64.StdEncoding.DecodeString(s)
+	ba.bytes = bytes
+	ba.usedBytes = len(bytes)
 }
 
 func SayHello(str string) {

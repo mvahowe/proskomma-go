@@ -252,3 +252,18 @@ func TestTrim(t *testing.T) {
 			)
 	}
 }
+
+func TestBase64(t *testing.T) {
+	ba := NewByteArray(32)
+	_ = ba.PushCountedString("abcde")
+	ba2 := NewByteArray(32)
+	ba2.fromBase64(ba.base64())
+	s, _ := ba2.CountedString(0)
+	if s != "abcde" {
+		t.Errorf(
+			"Base64'd string should be '%s', not '%s'",
+			"abcde",
+			s,
+			)
+	}
+}
