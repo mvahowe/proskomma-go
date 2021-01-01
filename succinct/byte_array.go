@@ -96,7 +96,7 @@ func (ba *ByteArray) grow() error {
 }
 
 func (ba *ByteArray) Trim() error {
-	newBa := make([]uint8, 0, ba.usedBytes)
+	newBa := make([]uint8, ba.usedBytes)
 	copy(newBa, ba.bytes)
 	ba.bytes = newBa
 	return nil

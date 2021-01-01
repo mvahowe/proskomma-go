@@ -237,3 +237,18 @@ func TestNByteLength(t *testing.T) {
 	testNByteLength(t, &ba, pow2(14), 3)
 	testNByteLength(t, &ba, pow2(21), 4)
 }
+
+func TestTrim(t *testing.T) {
+	ba := NewByteArray(32)
+	_ = ba.PushCountedString("abcdef")
+	err := ba.Trim()
+	if err != nil {
+		t.Errorf("Trim threw error: %s", err)
+	}
+	if len(ba.bytes) != 7 {
+		t.Errorf(
+			"bytes length after Trim should be 7, not %d",
+			len(ba.bytes),
+			)
+	}
+}
