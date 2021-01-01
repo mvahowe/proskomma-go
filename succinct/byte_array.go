@@ -169,6 +169,13 @@ func (ba *ByteArray) CountedString(n int) (string, error) {
 	return string(sA), nil
 }
 
+func (ba *ByteArray) Clear() {
+	for n := 0; n < ba.usedBytes; n++ {
+		ba.bytes[n] = 0
+	}
+	ba.usedBytes = 0
+}
+
 func SayHello(str string) {
 	fmt.Println(str)
 }

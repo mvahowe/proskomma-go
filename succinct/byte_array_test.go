@@ -197,3 +197,15 @@ func TestCountedString(t *testing.T) {
 	testCountedString(t, "égale")
 	testCountedString(t, "וּ⁠בְ⁠דֶ֣רֶך")
 }
+
+func TestClear(t *testing.T) {
+	ba := NewByteArray(32)
+	_ = ba.PushCountedString("abcde")
+	ba.Clear()
+	if ba.usedBytes != 0 {
+		t.Errorf(
+			"usedBytes after Clear should be 0, not %d",
+			ba.usedBytes,
+		)
+	}
+}
