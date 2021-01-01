@@ -18,7 +18,11 @@ func NewByteArray(size uint) ByteArray {
 
 func (ba *ByteArray) Byte(n int) (uint8, error) {
 	if n >= ba.usedBytes {
-		return 0, fmt.Errorf("attempt to read byte %d (length %d)", n, ba.usedBytes)
+		return 0, fmt.Errorf(
+			"attempt to read byte %d (length %d)",
+			n,
+			ba.usedBytes,
+		)
 	}
 	return ba.bytes[n], nil
 }
@@ -37,9 +41,28 @@ func (ba *ByteArray) Bytes(n int, l int) ([]uint8, error) {
 
 func (ba *ByteArray) SetByte(n int, v uint8) error {
 	if n >= ba.usedBytes {
-		return fmt.Errorf("attempt to set byte %d (length %d)", n, ba.usedBytes)
+		return fmt.Errorf(
+			"attempt to set byte %d (length %d)",
+			n,
+			ba.usedBytes,
+		)
 	}
 	ba.bytes[n] = v
+	return nil
+}
+
+func (ba *ByteArray) SetBytes(n int, vl []uint8) error {
+	if (n + len(vl)) > ba.usedBytes {
+		return fmt.Errorf(
+			"attempt to set %d bytes from %d (length %d)",
+			len(vl),
+			n,
+			ba.usedBytes,
+		)
+	}
+	for i := range vl {
+		ba.bytes[n + i] = vl[i]
+	}
 	return nil
 }
 

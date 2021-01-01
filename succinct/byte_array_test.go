@@ -77,4 +77,40 @@ func TestPushReadBytes(t *testing.T) {
 	}
 	if vl[2] != 8 {
 		t.Errorf("4th byte via Bytes should be 8, not %d", v)
-	}}
+	}
+}
+
+func TestSetBytes(t *testing.T) {
+	ba := NewByteArray(10)
+	_ = ba.PushBytes([]uint8{2, 4, 6, 8})
+	v, _ := ba.Byte(2)
+	if v != 6 {
+		t.Errorf("2nd byte after PushBytes should be 6, not %d", v)
+	}
+	err := ba.SetBytes(1, []uint8{3, 5, 7})
+	if err != nil {
+		t.Errorf("SetBytes for ByteArray threw error: %s", err)
+	}
+	v, _ = ba.Byte(2)
+	if v != 5 {
+		t.Errorf("2nd byte after SetBytes should be 5, not %d", v)
+	}
+}
+
+func TestGrow(t *testing.T) {
+	ba := NewByteArray(5)
+	_ = ba.PushBytes([]uint8{2, 4, 6, 8, 10})
+	if ba.usedBytes != 5 {
+		t.Errorf("usedBytes after initial push should be 5, not %d", ba.usedBytes)
+	}
+	if len(ba.bytes) != 5 {
+		t.Errorf("Length after initial push should be 5, not %d", len(ba.bytes))
+	}
+	_ = ba.PushByte(12)
+	if ba.usedBytes != 6 {
+		t.Errorf("usedBytes after 2nd push should be 6, not %d", ba.usedBytes)
+	}
+	if len(ba.bytes) != 10 {
+		t.Errorf("Length after 2nd push should be 10, not %d", len(ba.bytes))
+	}
+}
