@@ -114,3 +114,50 @@ func TestGrow(t *testing.T) {
 		t.Errorf("Length after 2nd push should be 10, not %d", len(ba.bytes))
 	}
 }
+
+func TestNByte(t *testing.T) {
+	ba := NewByteArray(5)
+	err := ba.PushNByte(127)
+	if err != nil {
+		t.Errorf("PushNByte threw error: %s", err)
+	}
+	v, err := ba.Byte(0)
+	if err != nil {
+		t.Errorf("Byte for ByteArray after 1st PushNByte threw error: %s", err)
+	}
+	if v != (127 + 128) {
+		t.Errorf("Oth byte after first NBytes should be 255, not %d", v)
+	}
+	bv, err := ba.NByte(0)
+	if err != nil {
+		t.Errorf("NByte threw error: %s", err)
+	}
+	if bv != 127 {
+		t.Errorf("First NByte should be 127, not %d", bv)
+	}
+	err = ba.PushNByte(130)
+	if err != nil {
+		t.Errorf("Byte for ByteArray after 2nd PushNByte threw error: %s", err)
+	}
+	v, err = ba.Byte(1)
+	if err != nil {
+		t.Errorf("Byte for ByteArray after 2nd PushNByte threw error: %s", err)
+	}
+	vl, err := ba.Bytes(1, 2)
+	if err != nil {
+		t.Errorf("Bytes for ByteArray after 2nd PushNByte threw error: %s", err)
+	}
+	if vl[0] != 2 {
+		t.Errorf("First byte after 2nd PushNByte should be 2, not %d", vl[0])
+	}
+	if vl[1] != (1 + 128) {
+		t.Errorf("2nd byte after 2nd PushNByte should be 129, not %d", vl[1])
+	}
+	bv, err = ba.NByte(1)
+	if err != nil {
+		t.Errorf("2nd NByte threw error: %s", err)
+	}
+	if bv != 130 {
+		t.Errorf("2nd NByte should be 130, not %d", bv)
+	}
+}

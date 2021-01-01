@@ -102,6 +102,48 @@ func (ba *ByteArray) Trim() error {
 	return nil
 }
 
+func (ba *ByteArray) PushNByte(v uint32) error {
+	if v < 128 {
+		err := ba.PushByte(uint8(v + 128))
+		if err != nil {
+			return err
+		} else {
+			return nil
+		}
+	} else {
+		mod := v % 128
+		err := ba.PushByte(uint8(mod))
+		if err != nil {
+			return err
+		}
+		return ba.PushNByte(v >> 7)
+	}
+}
+
+func (ba *ByteArray) NByte(n int) (uint32, error) {
+	if n >= ba.usedBytes {
+		return 0, fmt.Errorf(
+			"attempt to read byte %d for NByte(length %d)",
+			n,
+			ba.usedBytes,
+		)
+	}
+	v, err := ba.Byte(n)
+	if err != nil {
+		return 0, err
+	}
+	if v > 127 {
+		return uint32(v - 128), nil
+	} else {
+		v2, err := ba.NByte(n + 1)
+		if err != nil {
+			return 0, err
+		} else {
+			return uint32(v) + (v2 * 128), nil
+		}
+	}
+}
+
 func SayHello(str string) {
 	fmt.Println(str)
 }
