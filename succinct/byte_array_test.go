@@ -209,3 +209,31 @@ func TestClear(t *testing.T) {
 		)
 	}
 }
+
+func testNByteLength(t *testing.T, ba *ByteArray, v int, l int) {
+	if ba.NByteLength(v) != l {
+		t.Errorf(
+			"NByteLength(%d) should be %d, not %d",
+			v,
+			l,
+			ba.NByteLength(v),
+			)
+	}
+}
+
+func pow2 (y int) int {
+	ret := 1
+	for y > 0 {
+		ret *= 2
+		y--
+	}
+	return ret
+}
+
+func TestNByteLength(t *testing.T) {
+	ba := NewByteArray(32)
+	testNByteLength(t, &ba, pow2(7) - 1, 1)
+	testNByteLength(t, &ba, pow2(7), 2)
+	testNByteLength(t, &ba, pow2(14), 3)
+	testNByteLength(t, &ba, pow2(21), 4)
+}

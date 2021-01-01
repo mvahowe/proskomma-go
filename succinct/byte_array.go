@@ -176,6 +176,15 @@ func (ba *ByteArray) Clear() {
 	ba.usedBytes = 0
 }
 
+func (ba *ByteArray) NByteLength(v int) int {
+	ret := 1
+	for v > 127 {
+		v = v >> 7
+		ret++
+	}
+	return ret
+}
+
 func SayHello(str string) {
 	fmt.Println(str)
 }
