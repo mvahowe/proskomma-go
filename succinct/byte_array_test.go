@@ -161,3 +161,39 @@ func TestNByte(t *testing.T) {
 		t.Errorf("2nd NByte should be 130, not %d", bv)
 	}
 }
+
+func testCountedString(t *testing.T, testString string) {
+	ba := NewByteArray(32)
+	err:= ba.PushCountedString(testString)
+	if err != nil {
+		t.Errorf("1st PushCountedString threw error: %s", err)
+	}
+	v, err := ba.Byte(0)
+	if err != nil {
+		t.Errorf("Byte after 1st PushCountedString threw error: %s", err)
+	}
+	if v != uint8(len(testString)) {
+		t.Errorf(
+			"String length after 1st PushCountedString should be %d, not %d",
+			len(testString),
+			v,
+			)
+	}
+	s, err := ba.CountedString(0)
+	if err != nil {
+		t.Errorf("CountedString after 1st PushCountedString threw error: %s", err)
+	}
+	if s != testString {
+		t.Errorf(
+			"expected first string to be '%s', not '%s'",
+			testString,
+			s,
+			)
+	}
+}
+
+func TestCountedString(t *testing.T) {
+	testCountedString(t, "abc")
+	testCountedString(t, "égale")
+	testCountedString(t, "וּ⁠בְ⁠דֶ֣רֶך")
+}

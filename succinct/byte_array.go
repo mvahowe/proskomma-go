@@ -144,6 +144,31 @@ func (ba *ByteArray) NByte(n int) (uint32, error) {
 	}
 }
 
+func (ba *ByteArray) PushCountedString(s string) error {
+	sA := []byte(s)
+	err := ba.PushByte(uint8(len(sA)))
+	if err != nil {
+		return err
+	}
+	err = ba.PushBytes(sA)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ba *ByteArray) CountedString(n int) (string, error) {
+	sLength, err := ba.Byte(n)
+	if err != nil {
+		return "", err
+	}
+	sA, err := ba.Bytes(n + 1, int(sLength))
+	if err != nil {
+		return "", err
+	}
+	return string(sA), nil
+}
+
 func SayHello(str string) {
 	fmt.Println(str)
 }
