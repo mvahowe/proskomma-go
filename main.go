@@ -2,8 +2,13 @@ package main
 
 import (
 	"./succinct"
+	"fmt"
 )
 
 func main() {
-	succinct.SayHello("Hello, world")
+	fmt.Println(
+		succinct.DocSetFromJSON(
+			"./test_data/serialize_example.json",
+		),
+	)
 }
