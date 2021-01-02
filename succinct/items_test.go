@@ -7,9 +7,12 @@ import (
 func TestHeaderBytes(t *testing.T) {
 	succinctString := "AwCvAwKAAwCJAwKABABqgQMCgAMA9QMBgQMCgAMAgQMCgAMAqQMCgAQAdYEDAoADAMUDAoAEAAOCAwKABAAGggMBgQMCgAMAgQMCgAQACIIDAYIDAoDDBYjDBoiDBomDBYkDALoDAoADAIcDAoADAIMDAoADAIUDAYEDAoADAYMEAAmCAwGBAwKAAwDeAwKABABBgwMCgAMAmgMCgAMA"
 	ba := NewByteArray(256)
-	ba.fromBase64(succinctString)
+	ba, err := NewByteArrayFromBase64(succinctString)
+	if err != nil {
+		t.Errorf("NewByteArrayFromBase64 threw error: %s", err)
+	}
 	pos := 0
-	for pos < ba.usedBytes {
+	for pos < len(ba.bytes) {
 		itemLength, itemType, itemSubtype, err := ba.headerBytes(pos)
 		if err != nil {
 			t.Errorf("headerBytes threw error: %s", err)
@@ -24,7 +27,7 @@ func TestHeaderBytes(t *testing.T) {
 		}
 		pos += itemLength
 	}
-	if pos != ba.usedBytes + 1 {
+	if pos != len(ba.bytes)+1 {
 		t.Errorf("last itemLength should point one past usedBytes")
 	}
 }

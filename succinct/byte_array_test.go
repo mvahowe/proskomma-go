@@ -6,11 +6,8 @@ import (
 
 func TestConstructor(t *testing.T) {
 	ba := NewByteArray(32)
-	if ba.usedBytes != 0 {
-		t.Errorf("usedBytes for new ByteArray is %d not 0", ba.usedBytes)
-	}
-	if len(ba.bytes) != 32 {
-		t.Errorf("bytes length for new ByteArray is %d not 32", len(ba.bytes))
+	if cap(ba.bytes) != 32 {
+		t.Errorf("bytes capacity for new ByteArray is %d not 32", len(ba.bytes))
 	}
 }
 
@@ -22,10 +19,7 @@ func TestReadPushByte(t *testing.T) {
 	if err == nil {
 		t.Errorf("Accessing unset byte for ByteArray did not throw error")
 	}
-	err = ba.PushByte(99)
-	if err != nil {
-		t.Errorf("PushByte for ByteArray threw error: '%s'", err)
-	}
+	ba.PushByte(99)
 	v, err = ba.Byte(0)
 	if err != nil {
 		t.Errorf("Accessing set byte for ByteArray threw error: %s", err)
@@ -38,7 +32,7 @@ func TestReadPushByte(t *testing.T) {
 func TestWriteByte(t *testing.T) {
 	ba := NewByteArray(1)
 	var v uint8
-	_ = ba.PushByte(93)
+	ba.PushByte(93)
 	v, _ = ba.Byte(0)
 	if v != 93 {
 		t.Errorf("0th byte for ByteArray should be 93 after PushByte")
@@ -59,10 +53,7 @@ func TestWriteByte(t *testing.T) {
 
 func TestPushReadBytes(t *testing.T) {
 	ba := NewByteArray(10)
-	err := ba.PushBytes([]uint8{2, 4, 6, 8})
-	if err != nil {
-		t.Errorf("PushBytes for ByteArray threw error: %s", err)
-	}
+	ba.PushBytes([]uint8{2, 4, 6, 8})
 	v, _ := ba.Byte(0)
 	if v != 2 {
 		t.Errorf("0th byte after PushBytes should be 2, not %d", v)
@@ -82,7 +73,7 @@ func TestPushReadBytes(t *testing.T) {
 
 func TestSetBytes(t *testing.T) {
 	ba := NewByteArray(10)
-	_ = ba.PushBytes([]uint8{2, 4, 6, 8})
+	ba.PushBytes([]uint8{2, 4, 6, 8})
 	v, _ := ba.Byte(2)
 	if v != 6 {
 		t.Errorf("2nd byte after PushBytes should be 6, not %d", v)
@@ -97,30 +88,9 @@ func TestSetBytes(t *testing.T) {
 	}
 }
 
-func TestGrow(t *testing.T) {
-	ba := NewByteArray(5)
-	_ = ba.PushBytes([]uint8{2, 4, 6, 8, 10})
-	if ba.usedBytes != 5 {
-		t.Errorf("usedBytes after initial push should be 5, not %d", ba.usedBytes)
-	}
-	if len(ba.bytes) != 5 {
-		t.Errorf("Length after initial push should be 5, not %d", len(ba.bytes))
-	}
-	_ = ba.PushByte(12)
-	if ba.usedBytes != 6 {
-		t.Errorf("usedBytes after 2nd push should be 6, not %d", ba.usedBytes)
-	}
-	if len(ba.bytes) != 10 {
-		t.Errorf("Length after 2nd push should be 10, not %d", len(ba.bytes))
-	}
-}
-
 func TestNByte(t *testing.T) {
 	ba := NewByteArray(5)
-	err := ba.PushNByte(127)
-	if err != nil {
-		t.Errorf("PushNByte threw error: %s", err)
-	}
+	ba.PushNByte(127)
 	v, err := ba.Byte(0)
 	if err != nil {
 		t.Errorf("Byte for ByteArray after 1st PushNByte threw error: %s", err)
@@ -135,10 +105,7 @@ func TestNByte(t *testing.T) {
 	if bv != 127 {
 		t.Errorf("First NByte should be 127, not %d", bv)
 	}
-	err = ba.PushNByte(130)
-	if err != nil {
-		t.Errorf("Byte for ByteArray after 2nd PushNByte threw error: %s", err)
-	}
+	ba.PushNByte(130)
 	v, err = ba.Byte(1)
 	if err != nil {
 		t.Errorf("Byte for ByteArray after 2nd PushNByte threw error: %s", err)
@@ -164,10 +131,7 @@ func TestNByte(t *testing.T) {
 
 func testCountedString(t *testing.T, testString string) {
 	ba := NewByteArray(32)
-	err:= ba.PushCountedString(testString)
-	if err != nil {
-		t.Errorf("1st PushCountedString threw error: %s", err)
-	}
+	ba.PushCountedString(testString)
 	v, err := ba.Byte(0)
 	if err != nil {
 		t.Errorf("Byte after 1st PushCountedString threw error: %s", err)
@@ -177,7 +141,7 @@ func testCountedString(t *testing.T, testString string) {
 			"String length after 1st PushCountedString should be %d, not %d",
 			len(testString),
 			v,
-			)
+		)
 	}
 	s, err := ba.CountedString(0)
 	if err != nil {
@@ -188,7 +152,7 @@ func testCountedString(t *testing.T, testString string) {
 			"expected first string to be '%s', not '%s'",
 			testString,
 			s,
-			)
+		)
 	}
 }
 
@@ -200,12 +164,12 @@ func TestCountedString(t *testing.T) {
 
 func TestClear(t *testing.T) {
 	ba := NewByteArray(32)
-	_ = ba.PushCountedString("abcde")
+	ba.PushCountedString("abcde")
 	ba.Clear()
-	if ba.usedBytes != 0 {
+	if len(ba.bytes) != 0 {
 		t.Errorf(
 			"usedBytes after Clear should be 0, not %d",
-			ba.usedBytes,
+			len(ba.bytes),
 		)
 	}
 }
@@ -217,11 +181,11 @@ func testNByteLength(t *testing.T, ba *ByteArray, v int, l int) {
 			v,
 			l,
 			ba.NByteLength(v),
-			)
+		)
 	}
 }
 
-func pow2 (y int) int {
+func pow2(y int) int {
 	ret := 1
 	for y > 0 {
 		ret *= 2
@@ -232,7 +196,7 @@ func pow2 (y int) int {
 
 func TestNByteLength(t *testing.T) {
 	ba := NewByteArray(32)
-	testNByteLength(t, &ba, pow2(7) - 1, 1)
+	testNByteLength(t, &ba, pow2(7)-1, 1)
 	testNByteLength(t, &ba, pow2(7), 2)
 	testNByteLength(t, &ba, pow2(14), 3)
 	testNByteLength(t, &ba, pow2(21), 4)
@@ -240,7 +204,7 @@ func TestNByteLength(t *testing.T) {
 
 func TestTrim(t *testing.T) {
 	ba := NewByteArray(32)
-	_ = ba.PushCountedString("abcdef")
+	ba.PushCountedString("abcdef")
 	err := ba.Trim()
 	if err != nil {
 		t.Errorf("Trim threw error: %s", err)
@@ -249,21 +213,23 @@ func TestTrim(t *testing.T) {
 		t.Errorf(
 			"bytes length after Trim should be 7, not %d",
 			len(ba.bytes),
-			)
+		)
 	}
 }
 
 func TestBase64(t *testing.T) {
 	ba := NewByteArray(32)
-	_ = ba.PushCountedString("abcde")
-	ba2 := NewByteArray(32)
-	ba2.fromBase64(ba.base64())
+	ba.PushCountedString("abcde")
+	ba2, err := NewByteArrayFromBase64(ba.base64())
+	if err != nil {
+		t.Errorf("NewByteArrayFromBase64 threw error: %s", err)
+	}
 	s, _ := ba2.CountedString(0)
 	if s != "abcde" {
 		t.Errorf(
 			"Base64'd string should be '%s', not '%s'",
 			"abcde",
 			s,
-			)
+		)
 	}
 }
