@@ -1,8 +1,9 @@
 package main
 
 import (
-	"./succinct"
 	"fmt"
+
+	"github.com/mvahowe/proskomma-go/succinct"
 )
 
 func main() {
