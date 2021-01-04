@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"./succinct"
+	"github.com/mvahowe/proskomma-go/succinct"
 )
 
 func main() {

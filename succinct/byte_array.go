@@ -7,45 +7,53 @@ import (
 
 type ByteArray struct {
 	bytes []uint8
-	usedBytes int
 }
 
 func NewByteArray(size uint) ByteArray {
 	return ByteArray{
-		bytes: make([]uint8, size),
-		usedBytes: 0,
+		bytes: make([]uint8, 0, size),
 	}
 }
 
+func NewByteArrayFromBase64(s string) (ByteArray, error) {
+	bytes, err := b64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return ByteArray{}, err
+	}
+	ba := NewByteArray(uint(len(bytes)))
+	ba.bytes = bytes
+	return ba, nil
+}
+
 func (ba *ByteArray) Byte(n int) (uint8, error) {
-	if n >= ba.usedBytes {
+	if n >= len(ba.bytes) {
 		return 0, fmt.Errorf(
 			"attempt to read byte %d (length %d)",
 			n,
-			ba.usedBytes,
+			len(ba.bytes),
 		)
 	}
 	return ba.bytes[n], nil
 }
 
 func (ba *ByteArray) Bytes(n int, l int) ([]uint8, error) {
-	if (n + l) > ba.usedBytes {
+	if (n + l) > len(ba.bytes) {
 		return []uint8{}, fmt.Errorf(
 			"attempt to read %d bytes from %d (length %d)",
 			l,
 			n,
-			ba.usedBytes,
-			)
+			len(ba.bytes),
+		)
 	}
-	return ba.bytes[n: n + l], nil
+	return ba.bytes[n : n+l], nil
 }
 
 func (ba *ByteArray) SetByte(n int, v uint8) error {
-	if n >= ba.usedBytes {
+	if n >= len(ba.bytes) {
 		return fmt.Errorf(
 			"attempt to set byte %d (length %d)",
 			n,
-			ba.usedBytes,
+			len(ba.bytes),
 		)
 	}
 	ba.bytes[n] = v
@@ -53,80 +61,51 @@ func (ba *ByteArray) SetByte(n int, v uint8) error {
 }
 
 func (ba *ByteArray) SetBytes(n int, vl []uint8) error {
-	if (n + len(vl)) > ba.usedBytes {
+	if (n + len(vl)) > len(ba.bytes) {
 		return fmt.Errorf(
 			"attempt to set %d bytes from %d (length %d)",
 			len(vl),
 			n,
-			ba.usedBytes,
+			len(ba.bytes),
 		)
 	}
 	for i := range vl {
-		ba.bytes[n + i] = vl[i]
+		ba.bytes[n+i] = vl[i]
 	}
 	return nil
 }
 
-func (ba *ByteArray) PushByte(v uint8) error {
-	if ba.usedBytes == len(ba.bytes) {
-		err := ba.grow()
-		if err != nil {
-			return err
-		}
-	}
-	ba.bytes[ba.usedBytes] = v
-	ba.usedBytes += 1
-	return nil
+func (ba *ByteArray) PushByte(v uint8) {
+	ba.bytes = append(ba.bytes, v)
 }
 
-func (ba *ByteArray) PushBytes(vl []uint8) error {
-	for v := range vl {
-		var err = ba.PushByte(vl[v])
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (ba *ByteArray) grow() error {
-	newBa := make([]uint8, len(ba.bytes) * 2)
-	copy(newBa, ba.bytes)
-	ba.bytes = newBa
-	return nil
+func (ba *ByteArray) PushBytes(vl []uint8) {
+	ba.bytes = append(ba.bytes, vl...)
 }
 
 func (ba *ByteArray) Trim() error {
-	newBa := make([]uint8, ba.usedBytes)
+	newBa := make([]uint8, len(ba.bytes))
 	copy(newBa, ba.bytes)
 	ba.bytes = newBa
 	return nil
 }
 
-func (ba *ByteArray) PushNByte(v uint32) error {
+func (ba *ByteArray) PushNByte(v uint32) {
 	if v < 128 {
-		err := ba.PushByte(uint8(v + 128))
-		if err != nil {
-			return err
-		} else {
-			return nil
-		}
+		ba.PushByte(uint8(v + 128))
 	} else {
 		mod := v % 128
-		err := ba.PushByte(uint8(mod))
-		if err != nil {
-			return err
-		}
-		return ba.PushNByte(v >> 7)
+		ba.PushByte(uint8(mod))
+		ba.PushNByte(v >> 7)
 	}
 }
 
 func (ba *ByteArray) NByte(n int) (uint32, error) {
-	if n >= ba.usedBytes {
+	if n >= len(ba.bytes) {
 		return 0, fmt.Errorf(
 			"attempt to read byte %d for NByte(length %d)",
 			n,
-			ba.usedBytes,
+			len(ba.bytes),
 		)
 	}
 	v, err := ba.Byte(n)
@@ -145,17 +124,10 @@ func (ba *ByteArray) NByte(n int) (uint32, error) {
 	}
 }
 
-func (ba *ByteArray) PushCountedString(s string) error {
+func (ba *ByteArray) PushCountedString(s string) {
 	sA := []byte(s)
-	err := ba.PushByte(uint8(len(sA)))
-	if err != nil {
-		return err
-	}
-	err = ba.PushBytes(sA)
-	if err != nil {
-		return err
-	}
-	return nil
+	ba.PushByte(uint8(len(sA)))
+	ba.PushBytes(sA)
 }
 
 func (ba *ByteArray) CountedString(n int) (string, error) {
@@ -163,7 +135,7 @@ func (ba *ByteArray) CountedString(n int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	sA, err := ba.Bytes(n + 1, int(sLength))
+	sA, err := ba.Bytes(n+1, int(sLength))
 	if err != nil {
 		return "", err
 	}
@@ -171,10 +143,7 @@ func (ba *ByteArray) CountedString(n int) (string, error) {
 }
 
 func (ba *ByteArray) Clear() {
-	for n := 0; n < ba.usedBytes; n++ {
-		ba.bytes[n] = 0
-	}
-	ba.usedBytes = 0
+	ba.bytes = nil
 }
 
 func (ba *ByteArray) NByteLength(v int) int {
@@ -188,14 +157,4 @@ func (ba *ByteArray) NByteLength(v int) int {
 
 func (ba *ByteArray) base64() string {
 	return b64.StdEncoding.EncodeToString(ba.bytes)
-}
-
-func (ba *ByteArray) fromBase64(s string) {
-	bytes, _ := b64.StdEncoding.DecodeString(s)
-	ba.bytes = bytes
-	ba.usedBytes = len(bytes)
-}
-
-func SayHello(str string) {
-	fmt.Println(str)
 }

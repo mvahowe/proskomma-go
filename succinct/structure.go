@@ -16,8 +16,10 @@ func (e *EnumArrayMap) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	for enumLabel, enumB64 := range enumStrings {
-		ba := NewByteArray(256)
-		ba.fromBase64(enumB64)
+		ba, err := NewByteArrayFromBase64(enumB64)
+		if err != nil {
+			return err
+		}
 		_ = ba.Trim()
 		(*e)[enumLabel] = &ba
 	}
@@ -34,8 +36,10 @@ func (bam *BlockArrayMap) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	for blockFieldKey, blockFieldValue := range blocksStrings {
-		ba := NewByteArray(256)
-		ba.fromBase64(blockFieldValue)
+		ba, err := NewByteArrayFromBase64(blockFieldValue)
+		if err != nil {
+			return err
+		}
 		_ = ba.Trim()
 		(*bam)[blockFieldKey] = &ba
 	}
