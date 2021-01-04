@@ -13,7 +13,7 @@ func main() {
 
 	for docId := range ds.Docs {
 		seq := ds.Docs[docId].Sequences[ds.Docs[docId].MainId]
-		for i, blockMap := range seq.BlockArrayMaps {
+		for _, blockMap := range seq.BlockArrayMaps {
 			for k, v := range blockMap {
 				fmt.Println(k, v)
 			}
