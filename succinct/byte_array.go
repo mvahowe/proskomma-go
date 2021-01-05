@@ -2,6 +2,7 @@ package succinct
 
 import (
 	b64 "encoding/base64"
+	"encoding/json"
 	"fmt"
 )
 
@@ -157,4 +158,24 @@ func (ba *ByteArray) NByteLength(v int) int {
 
 func (ba *ByteArray) base64() string {
 	return b64.StdEncoding.EncodeToString(ba.bytes)
+}
+
+func (ba *ByteArray) UnmarshalJSON(b []byte) error {
+	var base64Str string
+	err := json.Unmarshal(b, &base64Str)
+	if err != nil {
+		return err
+	}
+	*ba, err = NewByteArrayFromBase64(base64Str)
+	if err != nil {
+		return err
+	}
+	err = ba.Trim()
+	return err
+}
+
+func (ba *ByteArray) MarshalJSON() ([]byte, error) {
+	var dst []byte
+	b64.StdEncoding.Encode(dst, ba.bytes)
+	return dst, nil
 }
