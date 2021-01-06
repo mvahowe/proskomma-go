@@ -156,10 +156,47 @@ func testCountedString(t *testing.T, testString string) {
 	}
 }
 
+func testCountedStrings(t *testing.T, testStrings []string) {
+	ba := NewByteArray(32)
+	for _, testString := range testStrings {
+		ba.PushCountedString(testString)
+	}
+	v, err := ba.Byte(0)
+	if err != nil {
+		t.Errorf("reading first Count Byte threw error: %s", err)
+	}
+	if v != uint8(len(testStrings[0])) {
+		t.Errorf(
+			"String length of first Counted String should be %d, not %d",
+			len(testStrings),
+			v,
+		)
+	}
+	strs, err := ba.CountedStrings()
+	if err != nil {
+		t.Errorf("CountedStrings after 1st PushCountedString threw error: %s", err)
+	}
+	for i, s := range strs {
+		if s != testStrings[i] {
+			t.Errorf(
+				"expected first string to be '%s', not '%s'",
+				testStrings[i],
+				s,
+			)
+		}
+	}
+}
+
 func TestCountedString(t *testing.T) {
 	testCountedString(t, "abc")
 	testCountedString(t, "égale")
 	testCountedString(t, "וּ⁠בְ⁠דֶ֣רֶך")
+}
+
+func TestCountedStrings(t *testing.T) {
+	testCountedStrings(t, []string{"abcd", "efg", "hijklmnop"})
+	testCountedStrings(t, []string{"égale"})
+	testCountedStrings(t, []string{"וּ⁠בְ⁠דֶ֣רֶך", "égale", "abcd", "efg", "hijklmnop"})
 }
 
 func TestClear(t *testing.T) {

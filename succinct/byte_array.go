@@ -143,6 +143,24 @@ func (ba *ByteArray) CountedString(n int) (string, error) {
 	return string(sA), nil
 }
 
+func (ba *ByteArray) CountedStrings() ([]string, error) {
+	var strs []string
+	var sLength uint8 = 0
+	var err error
+	for n := 0; (n + int(sLength)) < len(ba.bytes); n += int(sLength) + 1 {
+		sLength, err = ba.Byte(n)
+		if err != nil {
+			return nil, err
+		}
+		sA, err := ba.Bytes(n+1, int(sLength))
+		if err != nil {
+			return nil, err
+		}
+		strs = append(strs, string(sA))
+	}
+	return strs, nil
+}
+
 func (ba *ByteArray) Clear() {
 	ba.bytes = nil
 }
