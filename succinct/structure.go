@@ -6,49 +6,25 @@ import (
 	"os"
 )
 
-type EnumArrayMap map[string]*ByteArray
-
-func (e *EnumArrayMap) UnmarshalJSON(b []byte) error {
-	*e = make(EnumArrayMap)
-	var enumStrings map[string]string
-	err := json.Unmarshal(b, &enumStrings)
-	if err != nil {
-		return err
-	}
-	for enumLabel, enumB64 := range enumStrings {
-		ba, err := NewByteArrayFromBase64(enumB64)
-		if err != nil {
-			return err
-		}
-		_ = ba.Trim()
-		(*e)[enumLabel] = &ba
-	}
-	return nil
+type Enums struct {
+	IDs         ByteArray `json:"ids"`
+	WordLike    ByteArray `json:"wordLike"`
+	NotWordLike ByteArray `json:"notWordLike"`
+	ScopeBits   ByteArray `json:"scopeBits"`
+	GraftTypes  ByteArray `json:"graftTypes"`
 }
 
-type BlockArrayMap map[string]*ByteArray
-
-func (bam *BlockArrayMap) UnmarshalJSON(b []byte) error {
-	*bam = make(BlockArrayMap)
-	var blocksStrings map[string]string
-	err := json.Unmarshal(b, &blocksStrings)
-	if err != nil {
-		return err
-	}
-	for blockFieldKey, blockFieldValue := range blocksStrings {
-		ba, err := NewByteArrayFromBase64(blockFieldValue)
-		if err != nil {
-			return err
-		}
-		_ = ba.Trim()
-		(*bam)[blockFieldKey] = &ba
-	}
-	return nil
+type Block struct {
+	BlockScope     ByteArray `json:"bs"`
+	BlockGrafts    ByteArray `json:"bg"`
+	BlockItems     ByteArray `json:"c"`
+	OpenScopes     ByteArray `json:"os"`
+	IncludedScopes ByteArray `json:"is"`
 }
 
 type Sequence struct {
-	Type           string          `json:"type"`
-	BlockArrayMaps []BlockArrayMap `json:"blocks"`
+	Type   string  `json:"type"`
+	Blocks []Block `json:"blocks"`
 }
 
 type Doc struct {
@@ -58,9 +34,9 @@ type Doc struct {
 }
 
 type DocSet struct {
-	Id           string         `json:"id"`
-	EnumArrayMap EnumArrayMap   `json:"enums"`
-	Docs         map[string]Doc `json:"docs"`
+	Id    string         `json:"id"`
+	Enums Enums          `json:"enums"`
+	Docs  map[string]Doc `json:"docs"`
 }
 
 func DocSetFromJSON(pathString string) (*DocSet, error) {
