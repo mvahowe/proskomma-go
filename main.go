@@ -7,9 +7,14 @@ import (
 )
 
 func main() {
-	ds, _ := succinct.DocSetFromJSON(
+	ds, err := succinct.DocSetFromJSON(
 		"./test_data/serialize_example.json",
 	)
+	if err != nil {
+		fmt.Printf("error getting DocSet from JSON: %s\n", err)
+	}
+
+	fmt.Printf("Enums: %+v\n", ds.Enums)
 
 	for docId := range ds.Docs {
 		seq := ds.Docs[docId].Sequences[ds.Docs[docId].MainId]

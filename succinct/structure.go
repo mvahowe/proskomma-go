@@ -6,12 +6,24 @@ import (
 	"os"
 )
 
+type EnumList []string
+
+func (e *EnumList) UnmarshalJSON(b []byte) error {
+	var ba ByteArray
+	err := json.Unmarshal(b, &ba)
+	if err != nil {
+		return err
+	}
+	*e, err = ba.CountedStrings()
+	return err
+}
+
 type Enums struct {
-	IDs         ByteArray `json:"ids"`
-	WordLike    ByteArray `json:"wordLike"`
-	NotWordLike ByteArray `json:"notWordLike"`
-	ScopeBits   ByteArray `json:"scopeBits"`
-	GraftTypes  ByteArray `json:"graftTypes"`
+	IDs         EnumList `json:"ids"`
+	WordLike    EnumList `json:"wordLike"`
+	NotWordLike EnumList `json:"notWordLike"`
+	ScopeBits   EnumList `json:"scopeBits"`
+	GraftTypes  EnumList `json:"graftTypes"`
 }
 
 type Block struct {
