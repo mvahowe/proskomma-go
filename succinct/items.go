@@ -16,8 +16,6 @@ func (ba *ByteArray) headerBytes(pos int) (int, int, int, error) {
 
 /*
 succinctScopeLabel
-succinctGraftName
-succinctGraftSeqId
  */
 
 func tokenChars(enums *Enums, succinct *ByteArray, itemSubType int, pos int) (string, error) {
@@ -33,4 +31,16 @@ func tokenChars(enums *Enums, succinct *ByteArray, itemSubType int, pos int) (st
 		return "", err
 	}
 	return enumForToken[itemIndex], nil
+}
+
+func graftName(enums *Enums, itemSubType int) (string, error) {
+	return enums.GraftTypes[itemSubType], nil
+}
+
+func graftSeqId(enums *Enums, succinct *ByteArray, pos int) (string, error) {
+	itemIndex, err := succinct.NByte(pos + 2)
+	if err != nil {
+		return "", err
+	}
+	return enums.IDs[itemIndex], nil
 }
