@@ -104,3 +104,33 @@ func TestGraftNameAndSeqIDFromItems(t *testing.T) {
 		t.Errorf("No grafts found")
 	}
 }
+
+func TestScopeLabel(t *testing.T) {
+	ds := loadSuccinctJSON(t, "../test_data/serialize_example.json")
+	for docId := range ds.Docs {
+		seq := ds.Docs[docId].Sequences[ds.Docs[docId].MainId]
+		for _, block := range seq.Blocks {
+			pos := 0
+			ba := block.BlockItems
+			for pos < len(ba.bytes) {
+				itemLength, itemType, itemSubtype, err := ba.headerBytes(pos)
+				if err != nil {
+					t.Errorf("headerBytes threw error: %s", err)
+				}
+				if itemType > len(itemStrings) {
+					t.Errorf("Unexpected itemType %d", itemType)
+				}
+				if itemType == 2 || itemType == 3 {
+					scopeLabel, err := scopeLabel(&ds.Enums, &ba, itemSubtype, pos)
+					if err != nil {
+						t.Errorf("Error from scopeLabel: %s", err)
+					}
+					if len(scopeLabel) == 0 {
+						t.Errorf("Empty string from graftName")
+					}
+				}
+				pos += itemLength
+			}
+		}
+	}
+}
