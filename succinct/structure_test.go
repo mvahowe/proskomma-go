@@ -33,3 +33,32 @@ func TestHeaderBytesFromJSON(t *testing.T) {
 	}
 }
 
+func TestTokenChars(t *testing.T) {
+	ds := loadSuccinctJSON(t, "../test_data/serialize_example.json")
+	for docId := range ds.Docs {
+		seq := ds.Docs[docId].Sequences[ds.Docs[docId].MainId]
+		for _, block := range seq.Blocks {
+			pos := 0
+			ba := block.BlockItems
+			for pos < len(ba.bytes) {
+				itemLength, itemType, itemSubtype, err := ba.headerBytes(pos)
+				if err != nil {
+					t.Errorf("headerBytes threw error: %s", err)
+				}
+				if itemType > len(itemStrings) {
+					t.Errorf("Unexpected itemType %d", itemType)
+				}
+				if itemType == 0 {
+					tokenString, err := tokenChars(&ds.Enums, &ba, itemSubtype, pos)
+					if err != nil {
+						t.Errorf("Error from tokenChars: %s", err)
+					}
+					if len(tokenString) == 0 {
+						t.Errorf("Empty string from tokenChars")
+					}
+				}
+				pos += itemLength
+			}
+		}
+	}
+}

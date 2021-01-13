@@ -75,13 +75,13 @@ var tokenString2Int = map[string]int{
 
 var tokenStrings = reverseIntLookup(tokenString2Int)
 
-var tokenCategory = map[string]string{
-	"wordLike":      "wordLike",
-	"punctuation":   "notWordLike",
-	"lineSpace":     "notWordLike",
-	"eol":           "notWordLike",
-	"softLineBreak": "notWordLike",
-	"noBreakSpace":  "notWordLike",
-	"bareSlash":     "notWordLike",
-	"unknown":       "notWordLike",
+var tokenCategory = []string{
+	"wordLike",
+	"notWordLike",
+	"notWordLike",
+	"notWordLike",
+	"notWordLike",
+	"notWordLike",
+	"notWordLike",
+	"notWordLike",
 }
