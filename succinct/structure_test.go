@@ -1,19 +1,35 @@
 package succinct
 
 import (
-	"fmt"
 	"testing"
 )
 
-func TestLoadSuccinctJSON(t *testing.T) {
-	ds, err := DocSetFromJSON(
-		"../test_data/serialize_example.json",
-	)
+func loadSuccinctJSON(t *testing.T, path string) *DocSet {
+	ds, err := DocSetFromJSON(path)
 	if err != nil {
-		fmt.Printf("error getting DocSet from JSON: %s\n", err)
+		t.Errorf("error getting DocSet from JSON: %s\n", err)
 	}
 	if ds == nil {
-		fmt.Print("Returned docSet is nil")
+		t.Errorf("Returned docSet is nil")
+	}
+	return ds
+}
+
+func TestLoadSuccinctJSON(t *testing.T) {
+	loadSuccinctJSON(t, "../test_data/serialize_example.json")
+}
+
+func TestHeaderBytesFromJSON(t *testing.T) {
+	ds := loadSuccinctJSON(t, "../test_data/serialize_example.json")
+	for docId := range ds.Docs {
+		seq := ds.Docs[docId].Sequences[ds.Docs[docId].MainId]
+		for _, block := range seq.Blocks {
+			checkHeaderBytes(t, &block.BlockItems)
+			checkHeaderBytes(t, &block.BlockGrafts)
+			checkHeaderBytes(t, &block.BlockScope)
+			checkHeaderBytes(t, &block.IncludedScopes)
+			checkHeaderBytes(t, &block.OpenScopes)
+		}
 	}
 }
 
