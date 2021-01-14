@@ -4,13 +4,7 @@ import (
 	"testing"
 )
 
-func TestHeaderBytes(t *testing.T) {
-	succinctString := "AwCvAwKAAwCJAwKABABqgQMCgAMA9QMBgQMCgAMAgQMCgAMAqQMCgAQAdYEDAoADAMUDAoAEAAOCAwKABAAGggMBgQMCgAMAgQMCgAQACIIDAYIDAoDDBYjDBoiDBomDBYkDALoDAoADAIcDAoADAIMDAoADAIUDAYEDAoADAYMEAAmCAwGBAwKAAwDeAwKABABBgwMCgAMAmgMCgAMA"
-	ba := NewByteArray(256)
-	ba, err := NewByteArrayFromBase64(succinctString)
-	if err != nil {
-		t.Errorf("NewByteArrayFromBase64 threw error: %s", err)
-	}
+func checkHeaderBytes(t *testing.T, ba *ByteArray) {
 	pos := 0
 	for pos < len(ba.bytes) {
 		itemLength, itemType, itemSubtype, err := ba.headerBytes(pos)
@@ -27,7 +21,13 @@ func TestHeaderBytes(t *testing.T) {
 		}
 		pos += itemLength
 	}
-	if pos != len(ba.bytes)+1 {
-		t.Errorf("last itemLength should point one past usedBytes")
+	if pos != len(ba.bytes) {
+		t.Errorf("last itemLength should point one past byteArray (%d/%d)", pos, len(ba.bytes))
 	}
+}
+
+func TestHeaderBytes(t *testing.T) {
+	succinctString := "AwCvAwKAAwCJAwKABABqgQMCgAMA9QMBgQMCgAMAgQMCgAMAqQMCgAQAdYEDAoADAMUDAoAEAAOCAwKABAAGggMBgQMCgAMAgQMCgAQACIIDAYIDAoDDBYjDBoiDBomDBYkDALoDAoADAIcDAoADAIMDAoADAIUDAYEDAoADAYMEAAmCAwGBAwKAAwDeAwKABABBgwMCgAMAmgMCgAMA+QMCgAMAlQMCgAMAhAMCgAMAgwMCgAMAiwMCgAMAtQMBggMBhMMFicMGiQ=="
+	ba, _ := NewByteArrayFromBase64(succinctString)
+	checkHeaderBytes(t, &ba)
 }

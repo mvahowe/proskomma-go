@@ -62,6 +62,27 @@ var scopeString2Int = map[string]int{
 
 var scopeStrings = reverseIntLookup(scopeString2Int)
 
+var nComponentsForScope = []int{
+	2, // "blockTag"
+	2, // "inline"
+	2, // "chapter"
+	2, // "pubChapter"
+	2, // "altChapter"
+	2, // "verses"
+	2, // "verse"
+	2, // "pubVerse"
+	2, // "altVerse"
+	2, // "esbCat"
+	2, // "span"
+	1, // "table"
+	4, // "cell"
+	2, // "milestone"
+	2, // "spanWithAtts"
+	6, // "attribute"
+	1, // "hangingGraft"
+	1, // "orphanTokens"
+}
+
 var tokenString2Int = map[string]int{
 	"wordLike":      0,
 	"punctuation":   1,
@@ -75,13 +96,13 @@ var tokenString2Int = map[string]int{
 
 var tokenStrings = reverseIntLookup(tokenString2Int)
 
-var tokenCategory = map[string]string{
-	"wordLike":      "wordLike",
-	"punctuation":   "notWordLike",
-	"lineSpace":     "notWordLike",
-	"eol":           "notWordLike",
-	"softLineBreak": "notWordLike",
-	"noBreakSpace":  "notWordLike",
-	"bareSlash":     "notWordLike",
-	"unknown":       "notWordLike",
+var tokenCategory = []string{
+	"wordLike",
+	"notWordLike",
+	"notWordLike",
+	"notWordLike",
+	"notWordLike",
+	"notWordLike",
+	"notWordLike",
+	"notWordLike",
 }
