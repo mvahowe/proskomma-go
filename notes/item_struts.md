@@ -3,7 +3,9 @@
 Use Go enums for fixed types, eg itemType
 
 ITEMS = []ITEM*
+
 ITEM = TOKEN | SCOPE | GRAFT
+
 ITEMINTERFACE = type int, subType int
 
 ## Option 1: Keep succinct representation
@@ -14,7 +16,9 @@ ITEMINTERFACE = type int, subType int
 
 
 TOKEN = ITEMINTERFACE, charsIndex int
+
 SCOPE = ITEMINTERFACE, labelIndexes []int
+
 GRAFT = ITEMINTERFACE, seqId int
 
 ## Option 2: Unpack succinct representation
@@ -23,5 +27,7 @@ GRAFT = ITEMINTERFACE, seqId int
 - easier to use
 
 TOKEN = ITEMINTERFACE, chars string
+
 SCOPE = ITEMINTERFACE, label string
+
 GRAFT = ITEMINTERFACE, seqId string
