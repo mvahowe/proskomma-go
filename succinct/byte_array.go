@@ -208,10 +208,10 @@ func (ba *ByteArray) DeleteItem(n int) error {
 		remainingBytes := make([]uint8, len(ba.bytes)-(n+itemLength))
 		copy(remainingBytes, ba.bytes[n+itemLength:])
 		err = ba.SetBytes(n, remainingBytes)
-		ba.bytes = ba.bytes[:len(ba.bytes)-n]
 		if err != nil {
 			return err
 		}
+		ba.bytes = ba.bytes[:len(ba.bytes)-n]
 	}
 	return nil
 }
