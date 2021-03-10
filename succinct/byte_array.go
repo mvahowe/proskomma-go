@@ -197,3 +197,21 @@ func (ba *ByteArray) MarshalJSON() ([]byte, error) {
 	b64.StdEncoding.Encode(dst, ba.bytes)
 	return dst, nil
 }
+
+func (ba *ByteArray) DeleteItem(n int) error {
+	sLength, err := ba.Byte(n)
+	if err != nil {
+		return err
+	}
+	itemLength := int(sLength & 0x0000003F)
+	if len(ba.bytes) > n {
+		remainingBytes := make([]uint8, len(ba.bytes)-(n+itemLength))
+		copy(remainingBytes, ba.bytes[n+itemLength:])
+		err = ba.SetBytes(n, remainingBytes)
+		ba.bytes = ba.bytes[:len(ba.bytes)-n]
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
