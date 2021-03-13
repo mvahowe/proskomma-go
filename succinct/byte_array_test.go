@@ -270,3 +270,74 @@ func TestBase64(t *testing.T) {
 		)
 	}
 }
+
+func TestDeleteItem(t *testing.T) {
+	ba := NewByteArray(1)
+	lengthPos := len(ba.bytes)
+	ba.PushByte(0)
+	ba.PushByte(1)
+	ba.PushNByte(299)
+	ba.SetByte(lengthPos, uint8((len(ba.bytes)-lengthPos)|itemString2Int["token"]<<6))
+
+	lengthPos = len(ba.bytes)
+	ba.PushByte(0)
+	ba.PushByte(10)
+	ba.PushNByte(143)
+	ba.SetByte(lengthPos, uint8((len(ba.bytes)-lengthPos)|itemString2Int["graft"]<<6))
+
+	lengthPos = len(ba.bytes)
+	ba.PushByte(0)
+	ba.PushByte(2)
+	ba.PushNByte(567)
+	ba.SetByte(lengthPos, uint8((len(ba.bytes)-lengthPos)|3<<6))
+
+	firstLength, err := ba.Byte(0)
+	if err != nil {
+		t.Errorf("error: %s", err)
+	}
+	firstLength = firstLength & 0x0000003F
+
+	secondLength, err := ba.Byte(int(firstLength))
+	if err != nil {
+		t.Errorf("error: %s", err)
+	}
+	secondLength = secondLength & 0x0000003F
+
+	thirdLength, err := ba.Byte(int(firstLength + secondLength))
+	if err != nil {
+		t.Errorf("error: %s", err)
+	}
+	thirdLength = thirdLength & 0x0000003F
+
+	fullLength := int(firstLength + secondLength + thirdLength)
+	if fullLength != (len(ba.bytes)) {
+		t.Errorf("ByteArray expected to be length %d but was %d", fullLength, len(ba.bytes))
+	}
+
+	ba.DeleteItem(int(firstLength))
+
+	newFirstLength, err := ba.Byte(0)
+	if err != nil {
+		t.Errorf("error: %s", err)
+	}
+	newFirstLength = newFirstLength & 0x0000003F
+
+	newSecondLength, err := ba.Byte(int(newFirstLength))
+	if err != nil {
+		t.Errorf("error: %s", err)
+	}
+	newSecondLength = newSecondLength & 0x0000003F
+
+	if secondLength != newFirstLength {
+		t.Errorf("secondLength expected to be %d but was %d", newFirstLength, firstLength)
+	}
+
+	if thirdLength != newSecondLength {
+		t.Errorf("thirdLength expected to be %d but was %d", newSecondLength, thirdLength)
+	}
+
+	newFullLength := int(newFirstLength + newSecondLength)
+	if newFullLength != len(ba.bytes) {
+		t.Errorf("newFullLength expected to be %d but was %d", len(ba.bytes), newFullLength)
+	}
+}
