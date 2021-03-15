@@ -101,6 +101,12 @@ func (ba *ByteArray) PushNByte(v uint32) {
 	}
 }
 
+func (ba *ByteArray) PushNBytes(vl []uint32) {
+	for i := range vl {
+		ba.PushNByte(vl[i])
+	}
+}
+
 func (ba *ByteArray) NByte(n int) (uint32, error) {
 	if n >= len(ba.bytes) {
 		return 0, fmt.Errorf(
