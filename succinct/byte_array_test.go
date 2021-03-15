@@ -129,6 +129,24 @@ func TestNByte(t *testing.T) {
 	}
 }
 
+func TestPushNBytes(t *testing.T) {
+	ba := NewByteArray(1)
+	tValues := []uint32{127, 17000, 130}
+	ba.PushNBytes(tValues)
+	nBytes, err := ba.NBytes(0, len(tValues))
+	if err != nil {
+		t.Errorf("NBytes threw error: %s", err)
+	}
+	if len(nBytes) != len(tValues) {
+		t.Errorf("nBytes expected to be length %d but was %d", len(tValues), len(nBytes))
+	}
+	for i := range tValues {
+		if nBytes[i] != tValues[i] {
+			t.Errorf("nBytes[%d] expected to be %d but was %d", i, tValues[i], nBytes[i])
+		}
+	}
+}
+
 func testCountedString(t *testing.T, testString string) {
 	ba := NewByteArray(32)
 	ba.PushCountedString(testString)
