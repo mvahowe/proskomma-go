@@ -128,10 +128,9 @@ func (ba *ByteArray) NByte(n int) (uint32, error) {
 func (ba *ByteArray) NBytes(n int, nValues int) ([]uint32, error) {
 	var rValues []uint32
 	for nValues > 0 {
-		done := false
 		var cValue uint32 = 0
 		var multiplier uint32 = 1
-		for ok := true; ok; ok = !done {
+		for {
 			if n >= len(ba.bytes) {
 				return nil, fmt.Errorf(
 					"attempt to read byte %d (length %d)",
@@ -143,16 +142,15 @@ func (ba *ByteArray) NBytes(n int, nValues int) ([]uint32, error) {
 			if err != nil {
 				return nil, err
 			}
+			n++
 			if v > 127 {
 				cValue += uint32(v-128) * multiplier
 				rValues = append(rValues, cValue)
-				cValue = 0
-				done = true
+				break
 			} else {
 				cValue += uint32(v) * multiplier
 				multiplier *= 128
 			}
-			n++
 		}
 		nValues--
 	}
