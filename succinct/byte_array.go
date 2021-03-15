@@ -125,6 +125,40 @@ func (ba *ByteArray) NByte(n int) (uint32, error) {
 	}
 }
 
+func (ba *ByteArray) NBytes(n int, nValues int) ([]uint32, error) {
+	var rValues []uint32
+	for nValues > 0 {
+		done := false
+		var cValue uint32 = 0
+		var multiplier uint32 = 1
+		for ok := true; ok; ok = !done {
+			if n >= len(ba.bytes) {
+				return nil, fmt.Errorf(
+					"attempt to read byte %d (length %d)",
+					n,
+					len(ba.bytes),
+				)
+			}
+			v, err := ba.Byte(n)
+			if err != nil {
+				return nil, err
+			}
+			if v > 127 {
+				cValue += uint32(v-128) * multiplier
+				rValues = append(rValues, cValue)
+				cValue = 0
+				done = true
+			} else {
+				cValue += uint32(v) * multiplier
+				multiplier *= 128
+			}
+			n++
+		}
+		nValues--
+	}
+	return rValues, nil
+}
+
 func (ba *ByteArray) PushCountedString(s string) {
 	sA := []byte(s)
 	ba.PushByte(uint8(len(sA)))
