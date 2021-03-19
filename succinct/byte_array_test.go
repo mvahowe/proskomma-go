@@ -324,23 +324,9 @@ func TestBase64(t *testing.T) {
 
 func TestDeleteItem(t *testing.T) {
 	ba := NewByteArray(1)
-	lengthPos := len(ba.bytes)
-	ba.PushByte(0)
-	ba.PushByte(1)
-	ba.PushNByte(299)
-	ba.SetByte(lengthPos, uint8((len(ba.bytes)-lengthPos)|itemString2Int["token"]<<6))
-
-	lengthPos = len(ba.bytes)
-	ba.PushByte(0)
-	ba.PushByte(10)
-	ba.PushNByte(143)
-	ba.SetByte(lengthPos, uint8((len(ba.bytes)-lengthPos)|itemString2Int["graft"]<<6))
-
-	lengthPos = len(ba.bytes)
-	ba.PushByte(0)
-	ba.PushByte(2)
-	ba.PushNByte(567)
-	ba.SetByte(lengthPos, uint8((len(ba.bytes)-lengthPos)|3<<6))
+	ba.pushSuccinctTokenBytes(1, 299)
+	ba.pushSuccinctGraftBytes(10, 143)
+	ba.pushSuccinctScopeBytes(3, 2, []uint32{567})
 
 	firstLength, err := ba.Byte(0)
 	if err != nil {
@@ -392,3 +378,6 @@ func TestDeleteItem(t *testing.T) {
 		t.Errorf("newFullLength expected to be %d but was %d", len(ba.bytes), newFullLength)
 	}
 }
+
+//func TestInsert(t *testing.T) {
+//}
