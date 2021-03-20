@@ -253,3 +253,20 @@ func (ba *ByteArray) DeleteItem(n int) error {
 	}
 	return nil
 }
+
+func (ba *ByteArray) Insert(n int, iba ByteArray) error {
+	if n < len(ba.bytes)+len(iba.bytes) {
+		displacedBytes := make([]uint8, len(ba.bytes)-n)
+		copy(displacedBytes, ba.bytes[n:])
+		ba.bytes = append(ba.bytes, iba.bytes...)
+		err := ba.SetBytes(n+len(iba.bytes), displacedBytes)
+		if err != nil {
+			return err
+		}
+	}
+	err := ba.SetBytes(n, iba.bytes)
+	if err != nil {
+		return err
+	}
+	return nil
+}

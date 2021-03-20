@@ -402,7 +402,10 @@ func TestInsert(t *testing.T) {
 
 	iba := NewByteArray(8)
 	iba.pushSuccinctGraftBytes(10, 143)
-	ba.Insert(int(tokenLength), iba)
+	err = ba.Insert(int(tokenLength), iba)
+	if err != nil {
+		t.Errorf("error: %s", err)
+	}
 
 	firstLength, err := ba.Byte(0)
 	if err != nil {
@@ -440,7 +443,10 @@ func TestInsert(t *testing.T) {
 
 	iba2 := NewByteArray(1)
 	iba2.pushSuccinctGraftBytes(5, 47)
-	ba.Insert(int(firstLength+secondLength+thirdLength), iba2)
+	err = ba.Insert(int(firstLength+secondLength+thirdLength), iba2)
+	if err != nil {
+		t.Errorf("error: %s", err)
+	}
 
 	fourthLength, err := ba.Byte(int(firstLength + secondLength + thirdLength))
 	if err != nil {
