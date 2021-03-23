@@ -380,7 +380,7 @@ func TestDeleteItem(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
-	ba := NewByteArray(8)
+	ba := NewByteArray(12)
 	ba.pushSuccinctTokenBytes(1, 299)
 	ba.pushSuccinctScopeBytes(3, 2, []uint32{567})
 
@@ -454,21 +454,5 @@ func TestInsert(t *testing.T) {
 
 	if int(firstLength+secondLength+thirdLength+fourthLength) != len(ba.bytes) {
 		t.Errorf("sum of first/second/third/fourth lengths expected to be %d but was %d", len(ba.bytes), int(firstLength+secondLength+thirdLength+fourthLength))
-	}
-
-	ba2 := NewByteArray(32)
-	ba2.pushSuccinctTokenBytes(1, 299)
-	ba2.pushSuccinctScopeBytes(3, 2, []uint32{567})
-	tokenLength, err = ba.Byte(0)
-	if err != nil {
-		t.Errorf("error: %s", err)
-	}
-	tokenLength = tokenLength & 0x0000003F
-	iba3 := NewByteArray(8)
-	iba3.pushSuccinctGraftBytes(10, 143)
-	expectedLength := len(ba2.bytes) + len(iba3.bytes)
-	ba2.Insert(int(tokenLength), iba3)
-	if len(ba2.bytes) != expectedLength {
-		t.Errorf("length expected to be %d but was %d", expectedLength, len(ba2.bytes))
 	}
 }
