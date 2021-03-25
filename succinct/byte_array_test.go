@@ -324,23 +324,9 @@ func TestBase64(t *testing.T) {
 
 func TestDeleteItem(t *testing.T) {
 	ba := NewByteArray(1)
-	lengthPos := len(ba.bytes)
-	ba.PushByte(0)
-	ba.PushByte(1)
-	ba.PushNByte(299)
-	ba.SetByte(lengthPos, uint8((len(ba.bytes)-lengthPos)|itemString2Int["token"]<<6))
-
-	lengthPos = len(ba.bytes)
-	ba.PushByte(0)
-	ba.PushByte(10)
-	ba.PushNByte(143)
-	ba.SetByte(lengthPos, uint8((len(ba.bytes)-lengthPos)|itemString2Int["graft"]<<6))
-
-	lengthPos = len(ba.bytes)
-	ba.PushByte(0)
-	ba.PushByte(2)
-	ba.PushNByte(567)
-	ba.SetByte(lengthPos, uint8((len(ba.bytes)-lengthPos)|3<<6))
+	ba.pushSuccinctTokenBytes(1, 299)
+	ba.pushSuccinctGraftBytes(10, 143)
+	ba.pushSuccinctScopeBytes(3, 2, []uint32{567})
 
 	firstLength, err := ba.Byte(0)
 	if err != nil {
@@ -390,5 +376,83 @@ func TestDeleteItem(t *testing.T) {
 	newFullLength := int(newFirstLength + newSecondLength)
 	if newFullLength != len(ba.bytes) {
 		t.Errorf("newFullLength expected to be %d but was %d", len(ba.bytes), newFullLength)
+	}
+}
+
+func TestInsert(t *testing.T) {
+	ba := NewByteArray(12)
+	ba.pushSuccinctTokenBytes(1, 299)
+	ba.pushSuccinctScopeBytes(3, 2, []uint32{567})
+
+	tokenLength, err := ba.Byte(0)
+	if err != nil {
+		t.Errorf("error: %s", err)
+	}
+	tokenLength = tokenLength & 0x0000003F
+
+	scopeLength, err := ba.Byte(int(tokenLength))
+	if err != nil {
+		t.Errorf("error: %s", err)
+	}
+	scopeLength = scopeLength & 0x0000003F
+
+	if int(tokenLength+scopeLength) != len(ba.bytes) {
+		t.Errorf("sum of tokenLength and scopeLength expected to be %d but was %d", len(ba.bytes), int(tokenLength+scopeLength))
+	}
+
+	iba := NewByteArray(8)
+	iba.pushSuccinctGraftBytes(10, 143)
+	ba.Insert(int(tokenLength), iba)
+
+	firstLength, err := ba.Byte(0)
+	if err != nil {
+		t.Errorf("error: %s", err)
+	}
+	firstLength = firstLength & 0x0000003F
+
+	secondLength, err := ba.Byte(int(firstLength))
+	if err != nil {
+		t.Errorf("error: %s", err)
+	}
+	secondLength = secondLength & 0x0000003F
+
+	thirdLength, err := ba.Byte(int(firstLength + secondLength))
+	if err != nil {
+		t.Errorf("error: %s", err)
+	}
+	thirdLength = thirdLength & 0x0000003F
+
+	if firstLength != tokenLength {
+		t.Errorf("firstLength expected to be %d but was %d", tokenLength, firstLength)
+	}
+
+	if int(secondLength) != len(iba.bytes) {
+		t.Errorf("secondLength expected to be %d but was %d", len(iba.bytes), int(secondLength))
+	}
+
+	if thirdLength != scopeLength {
+		t.Errorf("thirdLength expected to be %d but was %d", scopeLength, thirdLength)
+	}
+
+	if int(firstLength+secondLength+thirdLength) != len(ba.bytes) {
+		t.Errorf("sum of first/second/third lengths expected to be %d but was %d", len(ba.bytes), int(firstLength+secondLength+thirdLength))
+	}
+
+	iba2 := NewByteArray(1)
+	iba2.pushSuccinctGraftBytes(5, 47)
+	ba.Insert(int(firstLength+secondLength+thirdLength), iba2)
+
+	fourthLength, err := ba.Byte(int(firstLength + secondLength + thirdLength))
+	if err != nil {
+		t.Errorf("error: %s", err)
+	}
+	fourthLength = fourthLength & 0x0000003F
+
+	if int(fourthLength) != len(iba2.bytes) {
+		t.Errorf("fourthLength expected to be %d but was %d", int(fourthLength), len(iba2.bytes))
+	}
+
+	if int(firstLength+secondLength+thirdLength+fourthLength) != len(ba.bytes) {
+		t.Errorf("sum of first/second/third/fourth lengths expected to be %d but was %d", len(ba.bytes), int(firstLength+secondLength+thirdLength+fourthLength))
 	}
 }

@@ -253,3 +253,19 @@ func (ba *ByteArray) DeleteItem(n int) error {
 	}
 	return nil
 }
+
+func (ba *ByteArray) Insert(n int, iba ByteArray) {
+	newLength := len(ba.bytes) + len(iba.bytes)
+	if newLength <= cap(ba.bytes) {
+		ba2 := ba.bytes[:newLength]
+		copy(ba2[n+len(iba.bytes):], ba.bytes[n:])
+		copy(ba2[n:], iba.bytes)
+		ba.bytes = ba2
+		return
+	}
+	ba2 := make([]uint8, len(ba.bytes)+len(iba.bytes))
+	copy(ba2, ba.bytes[:n])
+	copy(ba2[n:], iba.bytes)
+	copy(ba2[n+len(iba.bytes):], ba.bytes[n:])
+	ba.bytes = ba2
+}

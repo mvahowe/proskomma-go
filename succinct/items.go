@@ -59,3 +59,27 @@ func scopeLabel(enums *Enums, succinct *ByteArray, itemSubType int, pos int) (st
 	}
 	return strings.Join(scopeBits, "/"), nil
 }
+
+func (ba *ByteArray) pushSuccinctTokenBytes(tokenEnumIndex uint8, charsEnumIndex uint32) {
+	lengthPos := len(ba.bytes)
+	ba.PushByte(0)
+	ba.PushByte(tokenEnumIndex)
+	ba.PushNByte(charsEnumIndex)
+	ba.SetByte(lengthPos, uint8((len(ba.bytes)-lengthPos)|itemString2Int["token"]<<6))
+}
+
+func (ba *ByteArray) pushSuccinctGraftBytes(graftTypeEnumIndex uint8, seqEnumIndex uint32) {
+	lengthPos := len(ba.bytes)
+	ba.PushByte(0)
+	ba.PushByte(graftTypeEnumIndex)
+	ba.PushNByte(seqEnumIndex)
+	ba.SetByte(lengthPos, uint8((len(ba.bytes)-lengthPos)|itemString2Int["graft"]<<6))
+}
+
+func (ba *ByteArray) pushSuccinctScopeBytes(itemTypeByte uint8, scopeTypeByte uint8, scopeBitBytes []uint32) {
+	lengthPos := len(ba.bytes)
+	ba.PushByte(0)
+	ba.PushByte(scopeTypeByte)
+	ba.PushNBytes(scopeBitBytes)
+	ba.SetByte(lengthPos, uint8((len(ba.bytes)-lengthPos)|int(itemTypeByte)<<6))
+}
