@@ -460,15 +460,15 @@ func TestInsert(t *testing.T) {
 	}
 }
 
-type TestDataEnums struct {
+type testEnumStringDataEnums struct {
 	Ids         string
 	WordLike    string
 	NotWordLike string
 	ScopeBits   string
 	GraftTypes  string
 }
-type TestData struct {
-	Enums TestDataEnums
+type testEnumStringData struct {
+	Enums testEnumStringDataEnums
 }
 
 func TestEnumStringIndex(t *testing.T) {
@@ -478,7 +478,7 @@ func TestEnumStringIndex(t *testing.T) {
 	}
 	defer jsonFile.Close()
 	bytes, _ := ioutil.ReadAll(jsonFile)
-	var testData TestData
+	var testData testEnumStringData
 	json.Unmarshal(bytes, &testData)
 	testEnumStringIndex(t, testData.Enums.Ids)
 	testEnumStringIndex(t, testData.Enums.WordLike)
