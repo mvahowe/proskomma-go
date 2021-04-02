@@ -285,7 +285,7 @@ func (ba *ByteArray) EnumStringIndex(s string) (int, error) {
 			return count, nil
 		}
 		pos += int(strLen + 1)
-		count += 1
+		count++
 	}
 	return -1, nil
 }
