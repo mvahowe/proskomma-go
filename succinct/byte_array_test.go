@@ -488,7 +488,6 @@ func TestEnumStringIndex(t *testing.T) {
 }
 
 func testEnumStringIndex(t *testing.T, s string) {
-	//log.Printf("s: %s", s)
 	ba, err := NewByteArrayFromBase64(s)
 	if err != nil {
 		t.Errorf("NewByteArrayFromBase64 threw error: %s", err)
@@ -498,11 +497,9 @@ func testEnumStringIndex(t *testing.T, s string) {
 		t.Errorf("unpackEnum threw error: %s", err)
 	}
 	for count, enumValue := range enumValues {
-		//log.Printf("enumValue %s", enumValue)
 		enumIndex, err := ba.EnumStringIndex(enumValue)
 		if err != nil {
 			t.Errorf("EnumStringIndex threw error: %s", err)
-			//log.Printf("enumIndex %d", enumIndex)
 		}
 		if enumIndex < 0 {
 			t.Errorf("enumIndex less than 0: %d", enumIndex)
