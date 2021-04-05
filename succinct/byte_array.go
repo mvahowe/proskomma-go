@@ -269,3 +269,23 @@ func (ba *ByteArray) Insert(n int, iba ByteArray) {
 	copy(ba2[n+len(iba.bytes):], ba.bytes[n:])
 	ba.bytes = ba2
 }
+
+func (ba *ByteArray) EnumStringIndex(s string) (int, error) {
+	pos, count := 0, 0
+	for pos < len(ba.bytes) {
+		strLen, err := ba.Byte(pos)
+		if err != nil {
+			return -1, err
+		}
+		enumStr, err := ba.CountedString(pos)
+		if err != nil {
+			return -1, err
+		}
+		if enumStr == s {
+			return count, nil
+		}
+		pos += int(strLen + 1)
+		count++
+	}
+	return -1, nil
+}

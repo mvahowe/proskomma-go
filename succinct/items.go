@@ -83,3 +83,22 @@ func (ba *ByteArray) pushSuccinctScopeBytes(itemTypeByte uint8, scopeTypeByte ui
 	ba.PushNBytes(scopeBitBytes)
 	ba.SetByte(lengthPos, uint8((len(ba.bytes)-lengthPos)|int(itemTypeByte)<<6))
 }
+
+func (ba *ByteArray) unpackEnum() ([]string, error) {
+	pos, count := 0, 0
+	var s []string
+	for pos < len(ba.bytes) {
+		strLen, err := ba.Byte(pos)
+		if err != nil {
+			return nil, err
+		}
+		unpacked, err := ba.CountedString((pos))
+		if err != nil {
+			return nil, err
+		}
+		s = append(s, unpacked)
+		pos += int(strLen + 1)
+		count++
+	}
+	return s, nil
+}

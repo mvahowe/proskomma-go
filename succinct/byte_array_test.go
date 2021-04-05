@@ -1,6 +1,9 @@
 package succinct
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -454,5 +457,56 @@ func TestInsert(t *testing.T) {
 
 	if int(firstLength+secondLength+thirdLength+fourthLength) != len(ba.bytes) {
 		t.Errorf("sum of first/second/third/fourth lengths expected to be %d but was %d", len(ba.bytes), int(firstLength+secondLength+thirdLength+fourthLength))
+	}
+}
+
+type testEnumStringDataEnums struct {
+	Ids         string
+	WordLike    string
+	NotWordLike string
+	ScopeBits   string
+	GraftTypes  string
+}
+type testEnumStringData struct {
+	Enums testEnumStringDataEnums
+}
+
+func TestEnumStringIndex(t *testing.T) {
+	jsonFile, err := os.Open("../test_data/serialize_example.json")
+	if err != nil {
+		t.Error("Unable to open json test data file")
+	}
+	defer jsonFile.Close()
+	bytes, _ := ioutil.ReadAll(jsonFile)
+	var testData testEnumStringData
+	json.Unmarshal(bytes, &testData)
+	testEnumStringIndex(t, testData.Enums.Ids)
+	testEnumStringIndex(t, testData.Enums.WordLike)
+	testEnumStringIndex(t, testData.Enums.NotWordLike)
+	testEnumStringIndex(t, testData.Enums.ScopeBits)
+	testEnumStringIndex(t, testData.Enums.GraftTypes)
+}
+
+func testEnumStringIndex(t *testing.T, s string) {
+	ba, err := NewByteArrayFromBase64(s)
+	if err != nil {
+		t.Errorf("NewByteArrayFromBase64 threw error: %s", err)
+	}
+	enumValues, err := ba.unpackEnum()
+	if err != nil {
+		t.Errorf("unpackEnum threw error: %s", err)
+	}
+	for count, enumValue := range enumValues {
+		enumIndex, err := ba.EnumStringIndex(enumValue)
+		if err != nil {
+			t.Errorf("EnumStringIndex threw error: %s", err)
+		}
+		if enumIndex < 0 {
+			t.Errorf("enumIndex less than 0: %d", enumIndex)
+		}
+		if enumIndex != count {
+			t.Errorf("enumIndex was expected to be %d but was %d", count, enumIndex)
+		}
+		count++
 	}
 }
