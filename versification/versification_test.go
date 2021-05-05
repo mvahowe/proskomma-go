@@ -27,7 +27,7 @@ func TestVrsToMappings(t *testing.T) {
 
 	if v, present := m.MappedVerses["PSA 51:0"]; present {
 		if len(v.Verses) != 2 {
-			t.Errorf("Expected PSA 51:0 to have 2 mapped verses, but only found %d", len(v.Verses))
+			t.Errorf("Expected PSA 51:0 to have 2 mapped verses, but found %d", len(v.Verses))
 		}
 	} else {
 		t.Errorf("PSA 51:0 mapping not found")
