@@ -1,8 +1,6 @@
 package versification
 
 import (
-	"encoding/json"
-	"log"
 	"regexp"
 	"strings"
 )
@@ -39,9 +37,6 @@ func VrsToMappings(s string) (VrsMappings, error) {
 		mappedVerse := MappedVerse{Verses: verses}
 		mappings.MappedVerses[lineBits[1]] = mappedVerse
 	}
-
-	b, _ := json.Marshal(mappings)
-	log.Printf("%s", string(b))
 
 	return mappings, nil
 }
