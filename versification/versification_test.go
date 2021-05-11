@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestVrsToMappings(t *testing.T) {
+func TestVrsToForwardMappings(t *testing.T) {
 	jsonFile, err := os.Open("../test_data/truncated_versification.vrs")
 	if err != nil {
 		t.Error("Unable to open json test data file")
@@ -15,10 +15,10 @@ func TestVrsToMappings(t *testing.T) {
 	bytes, _ := ioutil.ReadAll(jsonFile)
 	s := string(bytes)
 
-	m, err := VrsToMappings(s)
+	m, err := VrsToForwardMappings(s)
 
 	if err != nil {
-		t.Errorf("Error running VrsToMappings: %s", err)
+		t.Errorf("Error running VrsToForwardMappings: %s", err)
 	}
 
 	if len(m.MappedVerses) == 0 {
@@ -32,4 +32,27 @@ func TestVrsToMappings(t *testing.T) {
 	} else {
 		t.Errorf("PSA 51:0 mapping not found")
 	}
+}
+
+func TestReverseVersification(t *testing.T) {
+	jsonFile, err := os.Open("../test_data/truncated_versification.vrs")
+	if err != nil {
+		t.Error("Unable to open json test data file")
+	}
+	defer jsonFile.Close()
+	bytes, _ := ioutil.ReadAll(jsonFile)
+	s := string(bytes)
+
+	m, err := VrsToForwardMappings(s)
+
+	r, err := ReverseVersification(m)
+
+	if err != nil {
+		t.Errorf("Error running VrsToForwardMappings: %s", err)
+	}
+
+	if len(r.MappedVerses) == 0 {
+		t.Errorf("No reverse mappings were returned")
+	}
+
 }
