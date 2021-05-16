@@ -47,7 +47,7 @@ func TestReverseVersification(t *testing.T) {
 	}
 
 	for _, mv := range m.MappedVerses {
-		if _, present := r.MappedVerses[mv[0]]; present {
+		if _, present := r.MappedVerses[mv[0]]; !present {
 			t.Errorf("Expected mapped verse %s to be a key in reverse mappings, but not found.", mv[0])
 		}
 	}
