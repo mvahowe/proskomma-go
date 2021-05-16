@@ -1,37 +1,32 @@
 package versification
 
 import (
-	"log"
 	"regexp"
 	"strings"
 )
 
 type ForwardMappings struct {
-	MappedVerses map[string]MappedVerse `json:"mappedVerses"`
+	MappedVerses map[string][]string `json:"mappedVerses"`
 }
 
 type ReverseMappings struct {
-	MappedVerses map[string]MappedVerse `json:"reverseMappedVerses"`
-}
-
-type MappedVerse struct {
-	Verses []string `json:""`
+	MappedVerses map[string][]string `json:"reverseMappedVerses"`
 }
 
 func NewForwardMappings() ForwardMappings {
 	var m ForwardMappings
-	m.MappedVerses = make(map[string]MappedVerse)
+	m.MappedVerses = make(map[string][]string)
 	return m
 }
 
 func NewReverseMappings() ReverseMappings {
 	var m ReverseMappings
-	m.MappedVerses = make(map[string]MappedVerse)
+	m.MappedVerses = make(map[string][]string)
 	return m
 }
 
-func VrsToForwardMappings(s string) (ForwardMappings, error) {
-	mappings := NewForwardMappings()
+func VrsToForwardMappings(s string) ForwardMappings {
+	m := NewForwardMappings()
 	lines := strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n")
 	r, _ := regexp.Compile("^([A-Z1-6]{3} [0-9]+:[0-9]+(-[0-9]+)?) = ([A-Z1-6]{3} [0-9]+:[0-9]+[a-z]?(-[0-9]+)?)$")
 	for i := range lines {
@@ -42,42 +37,27 @@ func VrsToForwardMappings(s string) (ForwardMappings, error) {
 
 		verses := make([]string, 0, len(lineBits)-2)
 		verses = append(verses, lineBits[3])
-		if v, present := mappings.MappedVerses[lineBits[1]]; present {
-			verses = append(v.Verses, verses...)
+		if v, present := m.MappedVerses[lineBits[1]]; present {
+			verses = append(v, verses...)
 		}
-		mappedVerse := MappedVerse{Verses: verses}
-		mappings.MappedVerses[lineBits[1]] = mappedVerse
+		m.MappedVerses[lineBits[1]] = verses
 	}
 
-	return mappings, nil
+	return m
 }
 
-func ReverseVersification(m ForwardMappings) (ReverseMappings, error) {
-	mappings := NewReverseMappings()
-	/*
-	   // Assumes each verse is only mapped from once
-	   const ret = {};
-	   for (const [fromSpec, toSpecs] of Object.entries(vrsJson.mappedVerses)) {
-	       for (const toSpec of toSpecs) {
-	           toSpec in ret ? ret[toSpec].push(fromSpec) : ret[toSpec] = [fromSpec];
-	       }
-	   }
-	   return {reverseMappedVerses: ret};
-	*/
+func ReverseVersification(m ForwardMappings) ReverseMappings {
+	r := NewReverseMappings()
 	for k, mv := range m.MappedVerses {
-		log.Printf("Key: %s", k)
-		for i := range mv.Verses {
-			log.Printf("   %s", mv.Verses[i])
+		for i := range mv {
 			verses := make([]string, 0, 1)
-			if v, present := mappings.MappedVerses[mv.Verses[i]]; present {
-				verses = append(v.Verses, k)
+			if v, present := r.MappedVerses[mv[i]]; present {
+				verses = append(v, k)
 			} else {
 				verses = append(verses, k)
 			}
-			mappedVerse := MappedVerse{Verses: verses}
-			mappings.MappedVerses[mv.Verses[i]] = mappedVerse
+			r.MappedVerses[mv[i]] = verses
 		}
 	}
-
-	return mappings, nil
+	return r
 }
