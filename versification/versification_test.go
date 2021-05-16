@@ -1,7 +1,9 @@
 package versification
 
 import (
+	"encoding/json"
 	"io/ioutil"
+	"log"
 	"os"
 	"testing"
 )
@@ -45,6 +47,9 @@ func TestReverseVersification(t *testing.T) {
 
 	m, err := VrsToForwardMappings(s)
 
+	bb, err := json.Marshal(m)
+	log.Printf("%s", bb)
+
 	r, err := ReverseVersification(m)
 
 	if err != nil {
@@ -55,4 +60,11 @@ func TestReverseVersification(t *testing.T) {
 		t.Errorf("No reverse mappings were returned")
 	}
 
+	b, err := json.Marshal(r)
+	log.Printf("%s", b)
+
+	//TODO remove
+	if len(r.MappedVerses) != 0 {
+		t.Errorf("No reverse mappings were returned")
+	}
 }

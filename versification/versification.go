@@ -15,7 +15,7 @@ type ReverseMappings struct {
 }
 
 type MappedVerse struct {
-	Verses []string
+	Verses []string `json:""`
 }
 
 func NewForwardMappings() ForwardMappings {
