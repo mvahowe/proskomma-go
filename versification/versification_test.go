@@ -1,7 +1,6 @@
 package versification
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -55,9 +54,6 @@ func TestReverseVersification(t *testing.T) {
 }
 
 func TestPreSuccinctVerseMapping(t *testing.T) {
-	//const vrsString = fse.readFileSync(path.resolve(__dirname, '../test_data/truncated_versification.vrs')).toString();
-	//const vrsJson = vrs2json(vrsString);
-	//console.log("brad here is where I want to look")
 	jsonFile, err := os.Open("../test_data/truncated_versification.vrs")
 	if err != nil {
 		t.Error("Unable to open json test data file")
@@ -70,32 +66,72 @@ func TestPreSuccinctVerseMapping(t *testing.T) {
 
 	p, err := preSuccinctVerseMapping(m.MappedVerses)
 	if err != nil {
-		t.Error("Unable to open json test data file")
+		t.Errorf("preSuccinctVerseMapping failed %s", err)
 	}
-	j, err := json.Marshal(p)
-	t.Errorf("%s", string(j))
 
-	//const preSuccinct = preSuccinctVerseMapping(vrsJson.mappedVerses);
-	//console.log("brad done here is where I want to look")
-	//let preSuccinctBooks = ['GEN', 'LEV', 'PSA', 'ACT', 'S3Y'];
-	//t.equal(Object.keys(preSuccinct).length, preSuccinctBooks.length);
-	//f//or (const book of preSuccinctBooks) {
-	//	t.ok(book in preSuccinct);
-	//}
-	//t.ok('31' in preSuccinct['GEN']);
-	//t.ok('32' in preSuccinct['GEN']);
-	//t.ok(preSuccinct['S3Y']['1'][0][2][0].includes('DAG'))
+	preSuccinctBooks := []string{"GEN", "LEV", "PSA", "ACT", "S3Y"}
+	if len(preSuccinctBooks) != len(p.BookMappings) {
+		t.Errorf("Expected preSuccinct mappings to have %d books, but found %d", len(preSuccinctBooks), len(p.BookMappings))
+	}
 
-	//const reversed = reverseVersification(vrsJson);
-	//const preSuccinctReversed = preSuccinctVerseMapping(reversed.reverseMappedVerses);
-	//preSuccinctBooks = ['GEN', 'LEV', 'PSA', 'ACT', 'DAG'];
-	//t.equal(Object.keys(preSuccinctReversed).length, preSuccinctBooks.length);
-	//for (const book of preSuccinctBooks) {
-	//    t.ok(book in preSuccinctReversed);
-	// }
-	// t.ok('5' in preSuccinctReversed['LEV']);
-	// t.ok('6' in preSuccinctReversed['LEV']);
-	// t.ok(preSuccinctReversed['DAG']['3'][0][2][0].includes('S3Y'))
-	// console.log(JSON.stringify(preSuccinctReversed, null, 2));
+	for _, b := range preSuccinctBooks {
+		if _, present := p.BookMappings[b]; !present {
+			t.Errorf("Expected book %s to be a key in preSuccinct mappings but not found.", b)
+		}
+	}
+
+	if _, present := p.BookMappings["GEN"]["31"]; !present {
+		t.Error("Expected book/chapter mapping GEN 31 to be present, but it was not.")
+	}
+	if _, present := p.BookMappings["GEN"]["32"]; !present {
+		t.Error("Expected book/chapter mapping GEN 32 to be present, but it was not.")
+	}
+
+	if vm, present := p.BookMappings["S3Y"]["1"]; present {
+		if vm[0].Bcv.Book != "DAG" {
+			t.Errorf("Expected to find mapping to book DAG, but found %s", vm[0].Bcv.Book)
+		}
+	} else {
+		t.Error("Expected book/chapter mapping S3Y 1 to be present, but it was not.")
+	}
+
+	r := ReverseVersification(m)
+
+	if len(r.MappedVerses) == 0 {
+		t.Errorf("No reverse mappings were returned")
+	}
+	pr, err := preSuccinctVerseMapping(r.MappedVerses)
+	if err != nil {
+		t.Errorf("preSuccinctVerseMapping failed on reverse mappings %s", err)
+	}
+
+	preSuccinctBooks = []string{"GEN", "LEV", "PSA", "ACT", "DAG"}
+	if len(preSuccinctBooks) != len(pr.BookMappings) {
+		t.Errorf("Expected preSuccinct reverse mappings to have %d books, but found %d", len(preSuccinctBooks), len(pr.BookMappings))
+	}
+
+	for _, b := range preSuccinctBooks {
+		if _, present := pr.BookMappings[b]; !present {
+			t.Errorf("Expected book %s to be a key in preSuccinct reverse mappings but not found.", b)
+		}
+	}
+
+	if _, present := pr.BookMappings["LEV"]["5"]; !present {
+		t.Error("Expected book/chapter mapping LEV 5 to be present, but it was not.")
+	}
+	if _, present := pr.BookMappings["LEV"]["6"]; !present {
+		t.Error("Expected book/chapter mapping LEV 6 to be present, but it was not.")
+	}
+
+	if vm, present := pr.BookMappings["DAG"]["3"]; present {
+		if vm[0].Bcv.Book != "S3Y" {
+			t.Errorf("Expected to find mapping to book S3Y, but found %s", vm[0].Bcv.Book)
+		}
+	} else {
+		t.Error("Expected book/chapter mapping DAG 3 to be present, but it was not.")
+	}
+
+	//j, err := json.Marshal(pr)
+	//t.Errorf("%s", string(j))
 
 }
