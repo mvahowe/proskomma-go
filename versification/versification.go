@@ -31,6 +31,129 @@ type Bcv struct {
 	Book      string
 }
 
+type SuccinctMappings struct {
+}
+
+func bookCodeIndex() (map[string]int, map[int]string) {
+	// From Paratext via Scripture Burrito
+	bookCodes := []string{
+		"GEN",
+		"EXO",
+		"LEV",
+		"NUM",
+		"DEU",
+		"JOS",
+		"JDG",
+		"RUT",
+		"1SA",
+		"2SA",
+		"1KI",
+		"2KI",
+		"1CH",
+		"2CH",
+		"EZR",
+		"NEH",
+		"EST",
+		"JOB",
+		"PSA",
+		"PRO",
+		"ECC",
+		"SNG",
+		"ISA",
+		"JER",
+		"LAM",
+		"EZK",
+		"DAN",
+		"HOS",
+		"JOL",
+		"AMO",
+		"OBA",
+		"JON",
+		"MIC",
+		"NAM",
+		"HAB",
+		"ZEP",
+		"HAG",
+		"ZEC",
+		"MAL",
+		"MAT",
+		"MRK",
+		"LUK",
+		"JHN",
+		"ACT",
+		"ROM",
+		"1CO",
+		"2CO",
+		"GAL",
+		"EPH",
+		"PHP",
+		"COL",
+		"1TH",
+		"2TH",
+		"1TI",
+		"2TI",
+		"TIT",
+		"PHM",
+		"HEB",
+		"JAS",
+		"1PE",
+		"2PE",
+		"1JN",
+		"2JN",
+		"3JN",
+		"JUD",
+		"REV",
+		"TOB",
+		"JDT",
+		"ESG",
+		"WIS",
+		"SIR",
+		"BAR",
+		"LJE",
+		"S3Y",
+		"SUS",
+		"BEL",
+		"1MA",
+		"2MA",
+		"3MA",
+		"4MA",
+		"1ES",
+		"2ES",
+		"MAN",
+		"PS2",
+		"ODA",
+		"PSS",
+		"JSA",
+		"JDB",
+		"TBS",
+		"SST",
+		"DNT",
+		"BLT",
+		"EZA",
+		"5EZ",
+		"6EZ",
+		"DAG",
+		"PS3",
+		"2BA",
+		"LBA",
+		"JUB",
+		"ENO",
+		"1MQ",
+		"2MQ",
+		"3MQ",
+		"REP",
+		"4BA",
+		"LAO"}
+
+	bookCodeToIndex := make(map[string]int)
+	indexToBookCode := make(map[int]string)
+	for i := range bookCodes {
+		bookCodeToIndex[bookCodes[i]] = i
+		indexToBookCode[i] = bookCodes[i]
+	}
+	return bookCodeToIndex, indexToBookCode
+}
+
 func NewForwardMappings() ForwardMappings {
 	var m ForwardMappings
 	m.MappedVerses = make(map[string][]string)
@@ -53,6 +176,11 @@ func NewVerseMappings() VerseMappings {
 	var v VerseMappings
 	v.Verses = make([]int, 0)
 	return v
+}
+
+func NewSuccinctMappings() SuccinctMappings {
+	var s SuccinctMappings
+	return s
 }
 
 func VrsToForwardMappings(s string) ForwardMappings {
@@ -92,6 +220,34 @@ func ReverseVersification(m ForwardMappings) ReverseMappings {
 	return r
 }
 
+func SuccinctifyVerseMappings(m map[string][]string) (SuccinctMappings, error) {
+	s := NewSuccinctMappings()
+	bookCodeToIndex, indexToBookCode := bookCodeIndex()
+	p, err := preSuccinctVerseMapping(m)
+	if err != nil {
+		return s, err
+	}
+	for book, chapterMap := range p.BookMappings {
+		//ret[book] = {};
+		//TODO what to do here?
+		for chapter, verseMappings := ranage chapterMap {
+			//ret[book][chapter] = succinctifyVerseMapping(mappings, bci);
+		}
+	}
+
+	//p.BookMappings
+	/*
+	   const bci = bookCodeIndex();
+	   for (const [book, chapters] of Object.entries(preSuccinctVerseMapping(preSuccinct))) {
+	       ret[book] = {};
+	       for (const [chapter, mappings] of Object.entries(chapters)) {
+	           ret[book][chapter] = succinctifyVerseMapping(mappings, bci);
+	       }
+	   }
+	*/
+	return s, nil
+}
+
 /*
     "S3Y 1:1-29": [
       "DAG 3:24-52"
@@ -122,6 +278,7 @@ func ReverseVersification(m ForwardMappings) ReverseMappings {
    setting ret[fromBook][fromCh] to empty object
 -----------------------
 */
+
 func preSuccinctVerseMapping(m map[string][]string) (PreSuccinctMappings, error) {
 	p := NewPreSuccinctMappings()
 	//for (let [fromSpec, toSpecs] of Object.entries(mappingJson)) {
