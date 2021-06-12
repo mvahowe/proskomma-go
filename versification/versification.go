@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/mvahowe/proskomma-go/succinct"
 )
 
 type ForwardMappings struct {
@@ -32,7 +34,11 @@ type Bcv struct {
 }
 
 type SuccinctMappings struct {
+	Mappings map[string]map[string]succinct.ByteArray
 }
+
+const cvMappingType = 2
+const bcvMappingType = 3
 
 func bookCodeIndex() (map[string]int, map[int]string) {
 	// From Paratext via Scripture Burrito
@@ -180,6 +186,7 @@ func NewVerseMappings() VerseMappings {
 
 func NewSuccinctMappings() SuccinctMappings {
 	var s SuccinctMappings
+	s.Mappings = make(map[string]map[string]succinct.ByteArray)
 	return s
 }
 
@@ -220,6 +227,55 @@ func ReverseVersification(m ForwardMappings) ReverseMappings {
 	return r
 }
 
+func makeMappingLengthByte(r int, l int) int {
+	return l + (r * 64)
+}
+
+func succinctifyVerseMapping(v []VerseMappings, bookCodeToIndex map[string]int, indexToBookCode map[int]string) (succinct.ByteArray, error) {
+	ba := succinct.NewByteArray(64)
+	//const ret = new ByteArray(64);
+
+	for _, vm := range v {
+		recordTypeStr := vm.MappingType
+		fromVerseStart := vm.Bcv.FromVerse
+		fromVerseEnd := vm.Bcv.ToVerse
+		mappings := vm.Verses
+		//for (const [recordTypeStr, [fromVerseStart, fromVerseEnd], mappings] of preSuccinctBC) {
+		//   const pos = ret.length;
+		pos := ba.Length()
+
+		//   const recordType = recordTypeStr === 'bcv' ? bcvMappingType : cvMappingType;
+		recordType := bcvMappingType
+		if recordTypeStr == "cv" {
+			recordType = cvMappingType
+		}
+
+		//   ret.pushNBytes([0, fromVerseStart, fromVerseEnd]);
+		ba.PushNBytes([]uint32{0, uint32(fromVerseStart), uint32(fromVerseEnd)})
+
+		//   if (recordType === bcvMappingType) {
+		//       const bookIndex = bci[mappings[0][3]];
+		//       ret.pushNByte(bookIndex);
+		//   }
+		//TODO stopped here...
+
+	}
+	//   ret.pushNByte(mappings.length);
+	//   for (const [ch, fromV] of mappings) {
+	//       ret.pushNBytes([ch, fromV]);
+	//   }
+	//   const recordLength = ret.length - pos;
+	//   if (recordLength > 63) {
+	//       throw new Error(`Mapping in succinctifyVerseMapping ${JSON.stringify(mappings)} is too long (${recordLength} bytes)`);
+	//   }
+	//   ret.setByte(pos, makeMappingLengthByte(recordType, recordLength));
+	//}
+	//ret.trim();
+	//return ret;
+
+	return b, nil
+}
+
 func SuccinctifyVerseMappings(m map[string][]string) (SuccinctMappings, error) {
 	s := NewSuccinctMappings()
 	bookCodeToIndex, indexToBookCode := bookCodeIndex()
@@ -229,9 +285,13 @@ func SuccinctifyVerseMappings(m map[string][]string) (SuccinctMappings, error) {
 	}
 	for book, chapterMap := range p.BookMappings {
 		//ret[book] = {};
-		//TODO what to do here?
-		for chapter, verseMappings := ranage chapterMap {
+		s.Mappings[book] = make(map[string]succinct.ByteArray)
+		for chapter, verseMappings := range chapterMap {
 			//ret[book][chapter] = succinctifyVerseMapping(mappings, bci);
+			s.Mappings[book][chapter], err = succinctifyVerseMapping(verseMappings, bookCodeToIndex, indexToBookCode)
+			if err != nil {
+				return s, err
+			}
 		}
 	}
 
