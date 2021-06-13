@@ -1,6 +1,8 @@
 package versification
 
 import (
+	"encoding/json"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -26,6 +28,8 @@ type VerseMappings struct {
 	Bcv         Bcv
 }
 
+//TODO Bcv probably isn't a good name...because this structure is used for cv/bcv...only bcv has the Book populated
+//js code refers in vars to this as mappings, but we use mappings all over the place
 type Bcv struct {
 	Chapter   int
 	FromVerse int
@@ -231,15 +235,15 @@ func makeMappingLengthByte(r int, l int) int {
 	return l + (r * 64)
 }
 
-func succinctifyVerseMapping(v []VerseMappings, bookCodeToIndex map[string]int, indexToBookCode map[int]string) (succinct.ByteArray, error) {
+func succinctifyVerseMapping(v []VerseMappings, bci map[string]int, ibc map[int]string) (succinct.ByteArray, error) {
 	ba := succinct.NewByteArray(64)
 	//const ret = new ByteArray(64);
 
 	for _, vm := range v {
 		recordTypeStr := vm.MappingType
-		fromVerseStart := vm.Bcv.FromVerse
-		fromVerseEnd := vm.Bcv.ToVerse
-		mappings := vm.Verses
+		fromVerseStart := vm.Verses[0]
+		fromVerseEnd := vm.Verses[1]
+		//verses := vm.Verses
 		//for (const [recordTypeStr, [fromVerseStart, fromVerseEnd], mappings] of preSuccinctBC) {
 		//   const pos = ret.length;
 		pos := ba.Length()
@@ -257,23 +261,51 @@ func succinctifyVerseMapping(v []VerseMappings, bookCodeToIndex map[string]int, 
 		//       const bookIndex = bci[mappings[0][3]];
 		//       ret.pushNByte(bookIndex);
 		//   }
-		//TODO stopped here...
+		if recordType == bcvMappingType {
+			bookIndex := bci[vm.Bcv.Book]
+			ba.PushNByte(uint32(bookIndex))
+		}
 
+		//   ret.pushNByte(mappings.length);
+		if recordTypeStr == "cv" {
+			ba.PushNByte(3)
+		} else {
+			ba.PushNByte(4)
+
+		}
+
+		//   for (const [ch, fromV] of mappings) {
+		//       ret.pushNBytes([ch, fromV]);
+		//   }
+		ba.PushNBytes([]uint32{uint32(vm.Bcv.Chapter), uint32(vm.Bcv.FromVerse)})
+
+		//   const recordLength = ret.length - pos;
+		recordLength := ba.Length() - pos
+
+		//   if (recordLength > 63) {
+		//       throw new Error(`Mapping in succinctifyVerseMapping ${JSON.stringify(mappings)} is too long (${recordLength} bytes)`);
+		//   }
+		if recordLength > 63 {
+			jsonMappings, _ := json.Marshal(vm.Bcv)
+
+			err := fmt.Errorf("Mapping in succinctifyVerseMapping %s is too long (%d bytes)", jsonMappings, recordLength)
+			return ba, err
+		}
+		//   ret.setByte(pos, makeMappingLengthByte(recordType, recordLength));
+		err := ba.SetByte(pos, uint8(makeMappingLengthByte(recordType, recordLength)))
+		if err != nil {
+			return ba, err
+		}
 	}
-	//   ret.pushNByte(mappings.length);
-	//   for (const [ch, fromV] of mappings) {
-	//       ret.pushNBytes([ch, fromV]);
-	//   }
-	//   const recordLength = ret.length - pos;
-	//   if (recordLength > 63) {
-	//       throw new Error(`Mapping in succinctifyVerseMapping ${JSON.stringify(mappings)} is too long (${recordLength} bytes)`);
-	//   }
-	//   ret.setByte(pos, makeMappingLengthByte(recordType, recordLength));
-	//}
+
 	//ret.trim();
+	err := ba.Trim()
+	if err != nil {
+		return ba, err
+	}
 	//return ret;
 
-	return b, nil
+	return ba, nil
 }
 
 func SuccinctifyVerseMappings(m map[string][]string) (SuccinctMappings, error) {
@@ -476,3 +508,6 @@ func preSuccinctVerseMapping(m map[string][]string) (PreSuccinctMappings, error)
 
 	return p, nil
 }
+
+//TODO unsuccinctifyVerseMapping
+//TODO mapVerse
