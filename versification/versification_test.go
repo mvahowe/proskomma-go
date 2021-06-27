@@ -130,8 +130,60 @@ func TestPreSuccinctVerseMapping(t *testing.T) {
 	} else {
 		t.Error("Expected book/chapter mapping DAG 3 to be present, but it was not.")
 	}
+}
 
-	//j, err := json.Marshal(pr)
-	//t.Errorf("%s", string(j))
+func TestSuccinctifyVerseMappings(t *testing.T) {
+	jsonFile, err := os.Open("../test_data/truncated_versification.vrs")
+	if err != nil {
+		t.Error("Unable to open json test data file")
+	}
+	defer jsonFile.Close()
+	bytes, _ := ioutil.ReadAll(jsonFile)
+	s := string(bytes)
 
+	m := VrsToForwardMappings(s)
+
+	c, err := SuccinctifyVerseMappings(m.MappedVerses)
+	if err != nil {
+		t.Errorf("SuccinctifyVerseMappings failed %s", err)
+	}
+
+	succinctBooks := []string{"GEN", "LEV", "PSA", "ACT", "S3Y"}
+	if len(succinctBooks) != len(c.Mappings) {
+		t.Errorf("Expected succinct mappings to have %d books, but found %d", len(succinctBooks), len(c.Mappings))
+	}
+
+	for _, b := range succinctBooks {
+		if _, present := c.Mappings[b]; !present {
+			t.Errorf("Expected book %s to be a key in succinct mappings but not found.", b)
+		}
+	}
+
+	if _, present := c.Mappings["GEN"]["31"]; !present {
+		t.Error("Expected book/chapter mapping GEN 31 to be present, but it was not.")
+	}
+	if _, present := c.Mappings["GEN"]["32"]; !present {
+		t.Error("Expected book/chapter mapping GEN 32 to be present, but it was not.")
+	}
+
+	r := ReverseVersification(m)
+	rs, err := SuccinctifyVerseMappings(r.MappedVerses)
+
+	succinctBooks = []string{"GEN", "LEV", "PSA", "ACT", "DAG"}
+	if len(succinctBooks) != len(rs.Mappings) {
+		t.Errorf("Expected reverse succinct mappings to have %d books, but found %d", len(succinctBooks), len(rs.Mappings))
+	}
+
+	for _, b := range succinctBooks {
+		if _, present := rs.Mappings[b]; !present {
+			t.Errorf("Expected book %s to be a key in reverse succinct mappings but not found.", b)
+		}
+	}
+
+	if _, present := rs.Mappings["LEV"]["5"]; !present {
+		t.Error("Expected book/chapter mapping LEV 31 to be present, but it was not.")
+	}
+	if _, present := rs.Mappings["LEV"]["6"]; !present {
+		t.Error("Expected book/chapter mapping LEV 32 to be present, but it was not.")
+	}
 }

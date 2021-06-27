@@ -26,6 +26,10 @@ func NewByteArrayFromBase64(s string) (ByteArray, error) {
 	return ba, nil
 }
 
+func (ba *ByteArray) Length() int {
+	return len(ba.bytes)
+}
+
 func (ba *ByteArray) Byte(n int) (uint8, error) {
 	if n >= len(ba.bytes) {
 		return 0, fmt.Errorf(
