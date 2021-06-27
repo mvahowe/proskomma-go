@@ -301,10 +301,6 @@ func SuccinctifyVerseMappings(m map[string][]string) (SuccinctMappings, error) {
 		}
 	}
 
-	b, err := json.Marshal(s)
-	if err != nil {
-		return s, err
-	}
 	return s, nil
 }
 
