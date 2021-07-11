@@ -17,11 +17,11 @@ func TestVrsToForwardMappings(t *testing.T) {
 
 	m := VrsToForwardMappings(s)
 
-	if len(m.MappedVerses) == 0 {
+	if len(m.Mappings.MappedVerses) == 0 {
 		t.Errorf("No vrs mappings were returned")
 	}
 
-	if v, present := m.MappedVerses["PSA 51:0"]; present {
+	if v, present := m.Mappings.MappedVerses["PSA 51:0"]; present {
 		if len(v) != 2 {
 			t.Errorf("Expected PSA 51:0 to have 2 mapped verses, but found %d", len(v))
 		}
@@ -42,12 +42,12 @@ func TestReverseVersification(t *testing.T) {
 	m := VrsToForwardMappings(s)
 	r := ReverseVersification(m)
 
-	if len(r.MappedVerses) == 0 {
+	if len(r.Mappings.MappedVerses) == 0 {
 		t.Errorf("No reverse mappings were returned")
 	}
 
-	for _, mv := range m.MappedVerses {
-		if _, present := r.MappedVerses[mv[0]]; !present {
+	for _, mv := range m.Mappings.MappedVerses {
+		if _, present := r.Mappings.MappedVerses[mv[0]]; !present {
 			t.Errorf("Expected mapped verse %s to be a key in reverse mappings, but not found.", mv[0])
 		}
 	}
@@ -64,7 +64,7 @@ func TestPreSuccinctVerseMapping(t *testing.T) {
 
 	m := VrsToForwardMappings(s)
 
-	p, err := preSuccinctVerseMapping(m.MappedVerses)
+	p, err := preSuccinctVerseMapping(m.Mappings)
 	if err != nil {
 		t.Errorf("preSuccinctVerseMapping failed %s", err)
 	}
@@ -88,8 +88,8 @@ func TestPreSuccinctVerseMapping(t *testing.T) {
 	}
 
 	if vm, present := p.BookMappings["S3Y"]["1"]; present {
-		if vm[0].Bcv.Book != "DAG" {
-			t.Errorf("Expected to find mapping to book DAG, but found %s", vm[0].Bcv.Book)
+		if vm[0].Mappings[0].Book != "DAG" {
+			t.Errorf("Expected to find mapping to book DAG, but found %s", vm[0].Mappings[0].Book)
 		}
 	} else {
 		t.Error("Expected book/chapter mapping S3Y 1 to be present, but it was not.")
@@ -97,10 +97,10 @@ func TestPreSuccinctVerseMapping(t *testing.T) {
 
 	r := ReverseVersification(m)
 
-	if len(r.MappedVerses) == 0 {
+	if len(r.Mappings.MappedVerses) == 0 {
 		t.Errorf("No reverse mappings were returned")
 	}
-	pr, err := preSuccinctVerseMapping(r.MappedVerses)
+	pr, err := preSuccinctVerseMapping(r.Mappings)
 	if err != nil {
 		t.Errorf("preSuccinctVerseMapping failed on reverse mappings %s", err)
 	}
@@ -124,8 +124,8 @@ func TestPreSuccinctVerseMapping(t *testing.T) {
 	}
 
 	if vm, present := pr.BookMappings["DAG"]["3"]; present {
-		if vm[0].Bcv.Book != "S3Y" {
-			t.Errorf("Expected to find mapping to book S3Y, but found %s", vm[0].Bcv.Book)
+		if vm[0].Mappings[0].Book != "S3Y" {
+			t.Errorf("Expected to find mapping to book S3Y, but found %s", vm[0].Mappings[0].Book)
 		}
 	} else {
 		t.Error("Expected book/chapter mapping DAG 3 to be present, but it was not.")
@@ -143,7 +143,7 @@ func TestSuccinctifyVerseMappings(t *testing.T) {
 
 	m := VrsToForwardMappings(s)
 
-	c, err := SuccinctifyVerseMappings(m.MappedVerses)
+	c, err := SuccinctifyVerseMappings(m.Mappings)
 	if err != nil {
 		t.Errorf("SuccinctifyVerseMappings failed %s", err)
 	}
@@ -167,7 +167,7 @@ func TestSuccinctifyVerseMappings(t *testing.T) {
 	}
 
 	r := ReverseVersification(m)
-	rs, err := SuccinctifyVerseMappings(r.MappedVerses)
+	rs, err := SuccinctifyVerseMappings(r.Mappings)
 
 	succinctBooks = []string{"GEN", "LEV", "PSA", "ACT", "DAG"}
 	if len(succinctBooks) != len(rs.Mappings) {
@@ -187,3 +187,88 @@ func TestSuccinctifyVerseMappings(t *testing.T) {
 		t.Error("Expected book/chapter mapping LEV 32 to be present, but it was not.")
 	}
 }
+
+func TestUnsuccinctifyVerseMappingForward(t *testing.T) {
+	jsonFile, err := os.Open("../test_data/truncated_versification.vrs")
+	if err != nil {
+		t.Error("Unable to open json test data file")
+	}
+	defer jsonFile.Close()
+	bytes, _ := ioutil.ReadAll(jsonFile)
+	s := string(bytes)
+
+	m := VrsToForwardMappings(s)
+
+	c, err := SuccinctifyVerseMappings(m.Mappings)
+	if err != nil {
+		t.Errorf("SuccinctifyVerseMappings failed %s", err)
+	}
+
+	unsuccinctS3Y, err := UnsuccinctifyVerseMapping(c.Mappings["S3Y"]["1"], "S3Y")
+	if err != nil {
+		t.Errorf("UnsuccinctifyVerseMapping failed for S3Y 1 %s", err)
+	}
+
+	//console.log("unsuccinctify result")
+	//console.log(JSON.stringify(unsuccinctS3Y, null, 2));
+	//b, err := json.Marshal(unsuccinctS3Y[0])
+	//if err != nil {
+	//	t.Error(err)
+	//	return
+	//}
+	//t.Error(string(b))
+
+	if unsuccinctS3Y[0].FromVerseStart != 1 {
+		t.Errorf("Expected unsuccinctify from verse start for S3Y 1 to be 1 but was %d", unsuccinctS3Y[0].FromVerseStart)
+	}
+	if unsuccinctS3Y[0].FromVerseEnd != 29 {
+		t.Errorf("Expected unsuccinctify from verse end for S3Y 1 to be 29 but was %d", unsuccinctS3Y[0].FromVerseEnd)
+	}
+	if unsuccinctS3Y[0].BookCode != "DAG" {
+		t.Errorf("Expected unsuccinctify book code for S3Y 1 to be DAG but was %s", unsuccinctS3Y[0].BookCode)
+	}
+	if unsuccinctS3Y[0].Mappings[0].Ch != 3 {
+		t.Errorf("Expected unsuccinctify S3Y 1 first mapping Ch to be 3 but was %d", unsuccinctS3Y[0].Mappings[0].Ch)
+	}
+	if unsuccinctS3Y[0].Mappings[0].VerseStart != 24 {
+		t.Errorf("Expected unsuccinctify S3Y 1 first mapping verse start to be 3 but was %d", unsuccinctS3Y[0].Mappings[0].VerseStart)
+	}
+
+	unsuccinctACT, err := UnsuccinctifyVerseMapping(c.Mappings["ACT"]["19"], "ACT")
+	if err != nil {
+		t.Errorf("UnsuccinctifyVerseMapping failed for ACT 19 %s", err)
+	}
+
+	if unsuccinctACT[0].FromVerseStart != 40 {
+		t.Errorf("Expected unsuccinctify from verse start for ACT 19[0] to be 40 but was %d", unsuccinctACT[0].FromVerseStart)
+	}
+	if unsuccinctACT[0].FromVerseEnd != 40 {
+		t.Errorf("Expected unsuccinctify from verse end for ACT 19[0] to be 40 but was %d", unsuccinctACT[0].FromVerseEnd)
+	}
+	if unsuccinctACT[0].BookCode != "ACT" {
+		t.Errorf("Expected unsuccinctify book code for ACT 19[0] to be ACT but was %s", unsuccinctACT[0].BookCode)
+	}
+	if unsuccinctACT[0].Mappings[0].Ch != 19 {
+		t.Errorf("Expected unsuccinctify ACT 19[0] first mapping Ch to be 19 but was %d", unsuccinctACT[0].Mappings[0].Ch)
+	}
+	if unsuccinctACT[0].Mappings[0].VerseStart != 40 {
+		t.Errorf("Expected unsuccinctify ACT 19[0] first mapping verse start to be 40 but was %d", unsuccinctACT[0].Mappings[0].VerseStart)
+	}
+	if unsuccinctACT[1].FromVerseStart != 41 {
+		t.Errorf("Expected unsuccinctify from verse start for ACT 19[1] to be 41 but was %d", unsuccinctACT[1].FromVerseStart)
+	}
+	if unsuccinctACT[1].FromVerseEnd != 41 {
+		t.Errorf("Expected unsuccinctify from verse end for ACT 19[1] to be 41 but was %d", unsuccinctACT[1].FromVerseEnd)
+	}
+	if unsuccinctACT[1].BookCode != "ACT" {
+		t.Errorf("Expected unsuccinctify book code for ACT 19[1] to be ACT but was %s", unsuccinctACT[1].BookCode)
+	}
+	if unsuccinctACT[1].Mappings[0].Ch != 19 {
+		t.Errorf("Expected unsuccinctify ACT 19[1] first mapping Ch to be 19 but was %d", unsuccinctACT[1].Mappings[0].Ch)
+	}
+	if unsuccinctACT[1].Mappings[0].VerseStart != 40 {
+		t.Errorf("Expected unsuccinctify ACT 19[1] first mapping verse start to be 40 but was %d", unsuccinctACT[1].Mappings[0].VerseStart)
+	}
+}
+
+//func TestUnsuccinctifyVerseMappingReverse(t *testing.T) {

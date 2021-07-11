@@ -3,6 +3,7 @@ package versification
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -11,11 +12,16 @@ import (
 )
 
 type ForwardMappings struct {
-	MappedVerses map[string][]string `json:"mappedVerses"`
+	Mappings VrsMappings `json:"mappedVerses"`
 }
 
 type ReverseMappings struct {
-	MappedVerses map[string][]string `json:"reverseMappedVerses"`
+	Mappings VrsMappings `json:"reverseMappedVerses"`
+}
+
+type VrsMappings struct {
+	MappedVerses map[string][]string
+	Keys         []string
 }
 
 type PreSuccinctMappings struct {
@@ -25,7 +31,7 @@ type PreSuccinctMappings struct {
 type VerseMappings struct {
 	MappingType string
 	Verses      []int
-	Bcv         Bcv
+	Mappings    []Bcv
 }
 
 type Bcv struct {
@@ -39,36 +45,26 @@ type SuccinctMappings struct {
 	Mappings map[string]map[string]succinct.ByteArray
 }
 
+type UnsuccinctRecord struct {
+	FromVerseStart int
+	FromVerseEnd   int
+	BookCode       string
+	Mappings       []ChapterVerseStart
+}
+
+type ChapterVerseStart struct {
+	Ch         int
+	VerseStart int
+}
+
 const cvMappingType = 2
 const bcvMappingType = 3
 
 func bookCodeIndex() (map[string]int, map[int]string) {
 	// From Paratext via Scripture Burrito
 	bookCodes := [...]string{
-		"GEN",
-		"EXO",
-		"LEV",
-		"NUM",
-		"DEU",
-		"JOS",
-		"JDG",
-		"RUT",
-		"1SA",
-		"2SA",
-		"1KI",
-		"2KI",
-		"1CH",
-		"2CH",
-		"EZR",
-		"NEH",
-		"EST",
-		"JOB",
-		"PSA",
-		"PRO",
-		"ECC",
-		"SNG",
-		"ISA",
-		"JER",
+		"GEN", "EXO", "LEV", "NUM", "DEU", "JOS", "JDG", "RUT", "1SA", "2SA", "1KI", "2KI",
+		"1CH", "2CH", "EZR", "NEH", "EST", "JOB", "PSA", "PRO", "ECC", "SNG", "ISA", "JER",
 		"LAM",
 		"EZK",
 		"DAN",
@@ -164,13 +160,15 @@ func bookCodeIndex() (map[string]int, map[int]string) {
 
 func NewForwardMappings() ForwardMappings {
 	var m ForwardMappings
-	m.MappedVerses = make(map[string][]string)
+	m.Mappings.MappedVerses = make(map[string][]string)
+	m.Mappings.Keys = make([]string, 0)
 	return m
 }
 
 func NewReverseMappings() ReverseMappings {
 	var m ReverseMappings
-	m.MappedVerses = make(map[string][]string)
+	m.Mappings.MappedVerses = make(map[string][]string)
+	m.Mappings.Keys = make([]string, 0)
 	return m
 }
 
@@ -183,6 +181,7 @@ func NewPreSuccinctMappings() PreSuccinctMappings {
 func NewVerseMappings() VerseMappings {
 	var v VerseMappings
 	v.Verses = make([]int, 0)
+	v.Mappings = make([]Bcv, 0)
 	return v
 }
 
@@ -204,10 +203,12 @@ func VrsToForwardMappings(s string) ForwardMappings {
 
 		verses := make([]string, 0, len(lineBits)-2)
 		verses = append(verses, lineBits[3])
-		if v, present := m.MappedVerses[lineBits[1]]; present {
+		if v, present := m.Mappings.MappedVerses[lineBits[1]]; present {
 			verses = append(v, verses...)
+		} else {
+			m.Mappings.Keys = append(m.Mappings.Keys, lineBits[1])
 		}
-		m.MappedVerses[lineBits[1]] = verses
+		m.Mappings.MappedVerses[lineBits[1]] = verses
 	}
 
 	return m
@@ -215,15 +216,19 @@ func VrsToForwardMappings(s string) ForwardMappings {
 
 func ReverseVersification(m ForwardMappings) ReverseMappings {
 	r := NewReverseMappings()
-	for k, mv := range m.MappedVerses {
+
+	for _, k := range m.Mappings.Keys {
+		//for k, mv := range m.MappedVerses {
+		mv := m.Mappings.MappedVerses[k]
 		for i := range mv {
 			verses := make([]string, 0, 1)
-			if v, present := r.MappedVerses[mv[i]]; present {
+			if v, present := r.Mappings.MappedVerses[mv[i]]; present {
 				verses = append(v, k)
 			} else {
 				verses = append(verses, k)
+				r.Mappings.Keys = append(r.Mappings.Keys, mv[i])
 			}
-			r.MappedVerses[mv[i]] = verses
+			r.Mappings.MappedVerses[mv[i]] = verses
 		}
 	}
 	return r
@@ -250,22 +255,19 @@ func succinctifyVerseMapping(v []VerseMappings, bci map[string]int, ibc map[int]
 		ba.PushNBytes([]uint32{0, uint32(fromVerseStart), uint32(fromVerseEnd)})
 
 		if recordType == bcvMappingType {
-			bookIndex := bci[vm.Bcv.Book]
+			bookIndex := bci[vm.Mappings[0].Book]
 			ba.PushNByte(uint32(bookIndex))
 		}
 
-		if recordTypeStr == "cv" {
-			ba.PushNByte(3)
-		} else {
-			ba.PushNByte(4)
+		ba.PushNByte(uint32(len(vm.Mappings)))
 
+		for i, _ := range vm.Mappings {
+			ba.PushNBytes([]uint32{uint32(vm.Mappings[i].Chapter), uint32(vm.Mappings[i].FromVerse)})
 		}
-
-		ba.PushNBytes([]uint32{uint32(vm.Bcv.Chapter), uint32(vm.Bcv.FromVerse)})
 
 		recordLength := ba.Length() - pos
 		if recordLength > 63 {
-			jsonMappings, _ := json.Marshal(vm.Bcv)
+			jsonMappings, _ := json.Marshal(vm.Mappings)
 
 			err := fmt.Errorf("Mapping in succinctifyVerseMapping %s is too long (%d bytes)", jsonMappings, recordLength)
 			return ba, err
@@ -284,7 +286,7 @@ func succinctifyVerseMapping(v []VerseMappings, bci map[string]int, ibc map[int]
 	return ba, nil
 }
 
-func SuccinctifyVerseMappings(m map[string][]string) (SuccinctMappings, error) {
+func SuccinctifyVerseMappings(m VrsMappings) (SuccinctMappings, error) {
 	s := NewSuccinctMappings()
 	bookCodeToIndex, indexToBookCode := bookCodeIndex()
 	p, err := preSuccinctVerseMapping(m)
@@ -304,9 +306,10 @@ func SuccinctifyVerseMappings(m map[string][]string) (SuccinctMappings, error) {
 	return s, nil
 }
 
-func preSuccinctVerseMapping(m map[string][]string) (PreSuccinctMappings, error) {
+func preSuccinctVerseMapping(m VrsMappings) (PreSuccinctMappings, error) {
 	p := NewPreSuccinctMappings()
-	for k, mv := range m {
+	for _, k := range m.Keys {
+		mv := m.MappedVerses[k]
 		s := strings.Split(k, " ")
 		fromBook := s[0]
 		fromCvv := s[1]
@@ -339,6 +342,7 @@ func preSuccinctVerseMapping(m map[string][]string) (PreSuccinctMappings, error)
 		}
 		record.Verses = append(record.Verses, fromVInt, toVInt)
 
+		//for (const toCVV of toSpecs.map(ts => ts.split(' ')[1])) {
 		for i := range mv {
 			s = strings.Split(mv[i], " ")
 			toCvv := s[1]
@@ -365,18 +369,20 @@ func preSuccinctVerseMapping(m map[string][]string) (PreSuccinctMappings, error)
 				return p, err
 			}
 			if record.MappingType == "cv" {
-				record.Bcv = Bcv{
+				bcv := Bcv{
 					Chapter:   toChInt,
 					FromVerse: fromVInt,
 					ToVerse:   toVInt,
 				}
+				record.Mappings = append(record.Mappings, bcv)
 			} else {
-				record.Bcv = Bcv{
+				cv := Bcv{
 					Chapter:   toChInt,
 					FromVerse: fromVInt,
 					ToVerse:   toVInt,
 					Book:      toBook,
 				}
+				record.Mappings = append(record.Mappings, cv)
 			}
 		}
 		if _, present := p.BookMappings[fromBook]; !present {
@@ -390,4 +396,132 @@ func preSuccinctVerseMapping(m map[string][]string) (PreSuccinctMappings, error)
 	}
 
 	return p, nil
+}
+
+func mappingLengthByte(s succinct.ByteArray, p int) (uint8, uint8, error) {
+	sByte, err := s.Byte(p)
+	if err != nil {
+		return 0, 0, err
+	}
+	t := sByte >> 6
+	l := sByte % 64
+	return t, l, nil
+}
+
+func UnsuccinctifyVerseMapping(s succinct.ByteArray, c string) ([]UnsuccinctRecord, error) {
+	records := make([]UnsuccinctRecord, 0)
+	_, indexToBookCode := bookCodeIndex()
+	//    let pos = 0;
+	pos := 0
+	//    while (pos < succinctBC.length) {
+	log.Printf("len %d", s.Length())
+	for pos < s.Length() {
+		//        let recordPos = pos;
+		//        const unsuccinctRecord = {};
+		recordPos := pos
+		u := UnsuccinctRecord{}
+		//        const [recordType, recordLength] = mappingLengthByte(succinctBC, pos);
+		recordType, recordLenth, err := mappingLengthByte(s, pos)
+		log.Printf("recordType %d", recordType)
+		log.Printf("recordLenth %d", recordLenth)
+		if err != nil {
+			log.Print("error 1")
+			return records, err
+		}
+		//        recordPos++;
+		recordPos++
+		//        unsuccinctRecord.fromVerseStart = succinctBC.nByte(recordPos);
+		fromVerseStart, err := s.NByte(recordPos)
+		if err != nil {
+			log.Print("error 2")
+			return records, err
+		}
+		log.Printf("fromVerseStart %d", fromVerseStart)
+		u.FromVerseStart = int(fromVerseStart)
+		log.Printf("u.FromVerseStart %d", u.FromVerseStart)
+		//        recordPos += succinctBC.nByteLength(unsuccinctRecord.fromVerseStart);
+		recordPos += s.NByteLength(u.FromVerseStart)
+		//        unsuccinctRecord.fromVerseEnd = succinctBC.nByte(recordPos);
+		fromVerseEnd, err := s.NByte(recordPos)
+		if err != nil {
+			log.Print("error 3")
+			return records, err
+		}
+		log.Printf("fromVerseEnd %d", fromVerseEnd)
+		u.FromVerseEnd = int(fromVerseEnd)
+		log.Printf("u.FromVerseEnd %d", u.FromVerseEnd)
+		//        recordPos += succinctBC.nByteLength(unsuccinctRecord.fromVerseEnd);
+		recordPos += s.NByteLength(u.FromVerseEnd)
+		//        unsuccinctRecord.bookCode = fromBookCode;
+		u.BookCode = c
+		//       if (recordType === bcvMappingType) {
+		if recordType == bcvMappingType {
+
+			//const bookIndex = succinctBC.nByte(recordPos);
+			//unsuccinctRecord.bookCode = bookCodes[bookIndex];
+			//recordPos += succinctBC.nByteLength(bookIndex);
+
+			//           const bookIndex = succinctBC.nByte(recordPos);
+			bookIndex, err := s.NByte(recordPos)
+			if err != nil {
+				log.Print("error 4")
+				return records, err
+			}
+			//           unsuccinctRecord.bookCode = bookCodes[bookIndex];
+			u.BookCode = indexToBookCode[int(bookIndex)]
+			log.Printf("bcv book code is %s", u.BookCode)
+			log.Printf("bcv book code index is %d", int(bookIndex))
+			//           recordPos += succinctBC.nByteLength(bookIndex);
+			recordPos += s.NByteLength(int(bookIndex))
+		}
+		log.Printf("record pos before getting nMappings %d", recordPos)
+		//        const nMappings = succinctBC.nByte(recordPos);
+		nMappings, err := s.NByte(recordPos)
+		log.Printf("nMappings %d", nMappings)
+		if err != nil {
+			log.Print("error 5")
+			return records, err
+		}
+		//        recordPos += succinctBC.nByteLength(nMappings);
+		recordPos += s.NByteLength(int(nMappings))
+		//        const mappings = [];
+		mappings := make([]ChapterVerseStart, 0)
+		//        while(mappings.length < nMappings) {
+		for len(mappings) < int(nMappings) {
+			log.Printf("len mappings %d", len(mappings))
+			log.Printf("int nMappings %d", int(nMappings))
+			//            const mapping = {};
+			m := ChapterVerseStart{}
+			//            mapping.ch = succinctBC.nByte(recordPos);
+			ch, err := s.NByte(recordPos)
+			if err != nil {
+				log.Print("error 6")
+				return records, err
+			}
+			m.Ch = int(ch)
+			log.Printf("m.Ch %d", m.Ch)
+			//            recordPos += succinctBC.nByteLength(mapping.ch);
+			recordPos += s.NByteLength(m.Ch)
+			//            mapping.verseStart = succinctBC.nByte(recordPos);
+			verseStart, err := s.NByte(recordPos)
+			if err != nil {
+				log.Print("error 7")
+				return records, err
+			}
+			m.VerseStart = int(verseStart)
+			log.Printf("m.VerseStart %d", m.VerseStart)
+			//            recordPos += succinctBC.nByteLength(mapping.verseStart);
+			recordPos += s.NByteLength(m.VerseStart)
+			//            mappings.push(mapping);
+			mappings = append(mappings, m)
+		}
+		//        unsuccinctRecord.mapping = mappings;
+		u.Mappings = mappings
+		//        ret.push(unsuccinctRecord);
+		records = append(records, u)
+		//        pos += recordLength;
+		pos += int(recordLenth)
+	}
+	//    return ret;
+	return records, nil
 }
