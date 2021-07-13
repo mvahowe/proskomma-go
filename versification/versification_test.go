@@ -208,16 +208,6 @@ func TestUnsuccinctifyVerseMappingForward(t *testing.T) {
 	if err != nil {
 		t.Errorf("UnsuccinctifyVerseMapping failed for S3Y 1 %s", err)
 	}
-
-	//console.log("unsuccinctify result")
-	//console.log(JSON.stringify(unsuccinctS3Y, null, 2));
-	//b, err := json.Marshal(unsuccinctS3Y[0])
-	//if err != nil {
-	//	t.Error(err)
-	//	return
-	//}
-	//t.Error(string(b))
-
 	if unsuccinctS3Y[0].FromVerseStart != 1 {
 		t.Errorf("Expected unsuccinctify from verse start for S3Y 1 to be 1 but was %d", unsuccinctS3Y[0].FromVerseStart)
 	}
@@ -231,14 +221,13 @@ func TestUnsuccinctifyVerseMappingForward(t *testing.T) {
 		t.Errorf("Expected unsuccinctify S3Y 1 first mapping Ch to be 3 but was %d", unsuccinctS3Y[0].Mappings[0].Ch)
 	}
 	if unsuccinctS3Y[0].Mappings[0].VerseStart != 24 {
-		t.Errorf("Expected unsuccinctify S3Y 1 first mapping verse start to be 3 but was %d", unsuccinctS3Y[0].Mappings[0].VerseStart)
+		t.Errorf("Expected unsuccinctify S3Y 1 first mapping verse start to be 24 but was %d", unsuccinctS3Y[0].Mappings[0].VerseStart)
 	}
 
 	unsuccinctACT, err := UnsuccinctifyVerseMapping(c.Mappings["ACT"]["19"], "ACT")
 	if err != nil {
 		t.Errorf("UnsuccinctifyVerseMapping failed for ACT 19 %s", err)
 	}
-
 	if unsuccinctACT[0].FromVerseStart != 40 {
 		t.Errorf("Expected unsuccinctify from verse start for ACT 19[0] to be 40 but was %d", unsuccinctACT[0].FromVerseStart)
 	}
@@ -271,4 +260,66 @@ func TestUnsuccinctifyVerseMappingForward(t *testing.T) {
 	}
 }
 
-//func TestUnsuccinctifyVerseMappingReverse(t *testing.T) {
+func TestUnsuccinctifyVerseMappingReverse(t *testing.T) {
+	jsonFile, err := os.Open("../test_data/truncated_versification.vrs")
+	if err != nil {
+		t.Error("Unable to open json test data file")
+	}
+	defer jsonFile.Close()
+	bytes, _ := ioutil.ReadAll(jsonFile)
+	s := string(bytes)
+
+	m := VrsToForwardMappings(s)
+	r := ReverseVersification(m)
+
+	c, err := SuccinctifyVerseMappings(r.Mappings)
+	if err != nil {
+		t.Errorf("SuccinctifyVerseMappings failed %s", err)
+	}
+
+	unsuccinctDAG, err := UnsuccinctifyVerseMapping(c.Mappings["DAG"]["3"], "DAG")
+	if err != nil {
+		t.Errorf("UnsuccinctifyVerseMapping failed for DAG 3 %s", err)
+	}
+	if unsuccinctDAG[0].FromVerseStart != 24 {
+		t.Errorf("Expected unsuccinctify from verse start for DAG 3 to be 24 but was %d", unsuccinctDAG[0].FromVerseStart)
+	}
+	if unsuccinctDAG[0].FromVerseEnd != 52 {
+		t.Errorf("Expected unsuccinctify from verse end for DAG 3 to be 52 but was %d", unsuccinctDAG[0].FromVerseEnd)
+	}
+	if unsuccinctDAG[0].BookCode != "S3Y" {
+		t.Errorf("Expected unsuccinctify book code for DAG 3 to be S3Y but was %s", unsuccinctDAG[0].BookCode)
+	}
+	if unsuccinctDAG[0].Mappings[0].Ch != 1 {
+		t.Errorf("Expected unsuccinctify DAG 3 first mapping Ch to be 1 but was %d", unsuccinctDAG[0].Mappings[0].Ch)
+	}
+	if unsuccinctDAG[0].Mappings[0].VerseStart != 1 {
+		t.Errorf("Expected unsuccinctify DAG 3 first mapping verse start to be 1 but was %d", unsuccinctDAG[0].Mappings[0].VerseStart)
+	}
+
+	unsuccinctACT, err := UnsuccinctifyVerseMapping(c.Mappings["ACT"]["19"], "ACT")
+	if err != nil {
+		t.Errorf("UnsuccinctifyVerseMapping failed for ACT 19 %s", err)
+	}
+	if unsuccinctACT[0].FromVerseStart != 40 {
+		t.Errorf("Expected unsuccinctify from verse start for ACT 19[0] to be 40 but was %d", unsuccinctACT[0].FromVerseStart)
+	}
+	if unsuccinctACT[0].FromVerseEnd != 40 {
+		t.Errorf("Expected unsuccinctify from verse end for ACT 19[0] to be 40 but was %d", unsuccinctACT[0].FromVerseEnd)
+	}
+	if unsuccinctACT[0].BookCode != "ACT" {
+		t.Errorf("Expected unsuccinctify book code for ACT 19[0] to be ACT but was %s", unsuccinctACT[0].BookCode)
+	}
+	if unsuccinctACT[0].Mappings[0].Ch != 19 {
+		t.Errorf("Expected unsuccinctify ACT 19[0] first mapping Ch to be 19 but was %d", unsuccinctACT[0].Mappings[0].Ch)
+	}
+	if unsuccinctACT[0].Mappings[0].VerseStart != 40 {
+		t.Errorf("Expected unsuccinctify ACT 19[0] first mapping verse start to be 40 but was %d", unsuccinctACT[0].Mappings[0].VerseStart)
+	}
+	if unsuccinctACT[0].Mappings[1].Ch != 19 {
+		t.Errorf("Expected unsuccinctify ACT 19[0] second mapping Ch to be 19 but was %d", unsuccinctACT[1].Mappings[0].Ch)
+	}
+	if unsuccinctACT[0].Mappings[1].VerseStart != 41 {
+		t.Errorf("Expected unsuccinctify ACT 19[0] second mapping verse start to be 41 but was %d", unsuccinctACT[1].Mappings[0].VerseStart)
+	}
+}

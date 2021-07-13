@@ -3,7 +3,6 @@ package versification
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -65,42 +64,9 @@ func bookCodeIndex() (map[string]int, map[int]string) {
 	bookCodes := [...]string{
 		"GEN", "EXO", "LEV", "NUM", "DEU", "JOS", "JDG", "RUT", "1SA", "2SA", "1KI", "2KI",
 		"1CH", "2CH", "EZR", "NEH", "EST", "JOB", "PSA", "PRO", "ECC", "SNG", "ISA", "JER",
-		"LAM",
-		"EZK",
-		"DAN",
-		"HOS",
-		"JOL",
-		"AMO",
-		"OBA",
-		"JON",
-		"MIC",
-		"NAM",
-		"HAB",
-		"ZEP",
-		"HAG",
-		"ZEC",
-		"MAL",
-		"MAT",
-		"MRK",
-		"LUK",
-		"JHN",
-		"ACT",
-		"ROM",
-		"1CO",
-		"2CO",
-		"GAL",
-		"EPH",
-		"PHP",
-		"COL",
-		"1TH",
-		"2TH",
-		"1TI",
-		"2TI",
-		"TIT",
-		"PHM",
-		"HEB",
-		"JAS",
-		"1PE",
+		"LAM", "EZK", "DAN", "HOS", "JOL", "AMO", "OBA", "JON", "MIC", "NAM", "HAB", "ZEP",
+		"HAG", "ZEC", "MAL", "MAT", "MRK", "LUK", "JHN", "ACT", "ROM", "1CO", "2CO", "GAL",
+		"EPH", "PHP", "COL", "1TH", "2TH", "1TI", "2TI", "TIT", "PHM", "HEB", "JAS", "1PE",
 		"2PE",
 		"1JN",
 		"2JN",
@@ -411,117 +377,61 @@ func mappingLengthByte(s succinct.ByteArray, p int) (uint8, uint8, error) {
 func UnsuccinctifyVerseMapping(s succinct.ByteArray, c string) ([]UnsuccinctRecord, error) {
 	records := make([]UnsuccinctRecord, 0)
 	_, indexToBookCode := bookCodeIndex()
-	//    let pos = 0;
 	pos := 0
-	//    while (pos < succinctBC.length) {
-	log.Printf("len %d", s.Length())
 	for pos < s.Length() {
-		//        let recordPos = pos;
-		//        const unsuccinctRecord = {};
 		recordPos := pos
 		u := UnsuccinctRecord{}
-		//        const [recordType, recordLength] = mappingLengthByte(succinctBC, pos);
 		recordType, recordLenth, err := mappingLengthByte(s, pos)
-		log.Printf("recordType %d", recordType)
-		log.Printf("recordLenth %d", recordLenth)
 		if err != nil {
-			log.Print("error 1")
 			return records, err
 		}
-		//        recordPos++;
 		recordPos++
-		//        unsuccinctRecord.fromVerseStart = succinctBC.nByte(recordPos);
 		fromVerseStart, err := s.NByte(recordPos)
 		if err != nil {
-			log.Print("error 2")
 			return records, err
 		}
-		log.Printf("fromVerseStart %d", fromVerseStart)
 		u.FromVerseStart = int(fromVerseStart)
-		log.Printf("u.FromVerseStart %d", u.FromVerseStart)
-		//        recordPos += succinctBC.nByteLength(unsuccinctRecord.fromVerseStart);
 		recordPos += s.NByteLength(u.FromVerseStart)
-		//        unsuccinctRecord.fromVerseEnd = succinctBC.nByte(recordPos);
 		fromVerseEnd, err := s.NByte(recordPos)
 		if err != nil {
-			log.Print("error 3")
 			return records, err
 		}
-		log.Printf("fromVerseEnd %d", fromVerseEnd)
 		u.FromVerseEnd = int(fromVerseEnd)
-		log.Printf("u.FromVerseEnd %d", u.FromVerseEnd)
-		//        recordPos += succinctBC.nByteLength(unsuccinctRecord.fromVerseEnd);
 		recordPos += s.NByteLength(u.FromVerseEnd)
-		//        unsuccinctRecord.bookCode = fromBookCode;
 		u.BookCode = c
-		//       if (recordType === bcvMappingType) {
 		if recordType == bcvMappingType {
-
-			//const bookIndex = succinctBC.nByte(recordPos);
-			//unsuccinctRecord.bookCode = bookCodes[bookIndex];
-			//recordPos += succinctBC.nByteLength(bookIndex);
-
-			//           const bookIndex = succinctBC.nByte(recordPos);
 			bookIndex, err := s.NByte(recordPos)
 			if err != nil {
-				log.Print("error 4")
 				return records, err
 			}
-			//           unsuccinctRecord.bookCode = bookCodes[bookIndex];
 			u.BookCode = indexToBookCode[int(bookIndex)]
-			log.Printf("bcv book code is %s", u.BookCode)
-			log.Printf("bcv book code index is %d", int(bookIndex))
-			//           recordPos += succinctBC.nByteLength(bookIndex);
 			recordPos += s.NByteLength(int(bookIndex))
 		}
-		log.Printf("record pos before getting nMappings %d", recordPos)
-		//        const nMappings = succinctBC.nByte(recordPos);
 		nMappings, err := s.NByte(recordPos)
-		log.Printf("nMappings %d", nMappings)
 		if err != nil {
-			log.Print("error 5")
 			return records, err
 		}
-		//        recordPos += succinctBC.nByteLength(nMappings);
 		recordPos += s.NByteLength(int(nMappings))
-		//        const mappings = [];
 		mappings := make([]ChapterVerseStart, 0)
-		//        while(mappings.length < nMappings) {
 		for len(mappings) < int(nMappings) {
-			log.Printf("len mappings %d", len(mappings))
-			log.Printf("int nMappings %d", int(nMappings))
-			//            const mapping = {};
 			m := ChapterVerseStart{}
-			//            mapping.ch = succinctBC.nByte(recordPos);
 			ch, err := s.NByte(recordPos)
 			if err != nil {
-				log.Print("error 6")
 				return records, err
 			}
 			m.Ch = int(ch)
-			log.Printf("m.Ch %d", m.Ch)
-			//            recordPos += succinctBC.nByteLength(mapping.ch);
 			recordPos += s.NByteLength(m.Ch)
-			//            mapping.verseStart = succinctBC.nByte(recordPos);
 			verseStart, err := s.NByte(recordPos)
 			if err != nil {
-				log.Print("error 7")
 				return records, err
 			}
 			m.VerseStart = int(verseStart)
-			log.Printf("m.VerseStart %d", m.VerseStart)
-			//            recordPos += succinctBC.nByteLength(mapping.verseStart);
 			recordPos += s.NByteLength(m.VerseStart)
-			//            mappings.push(mapping);
 			mappings = append(mappings, m)
 		}
-		//        unsuccinctRecord.mapping = mappings;
 		u.Mappings = mappings
-		//        ret.push(unsuccinctRecord);
 		records = append(records, u)
-		//        pos += recordLength;
 		pos += int(recordLenth)
 	}
-	//    return ret;
 	return records, nil
 }
